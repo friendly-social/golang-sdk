@@ -28,7 +28,7 @@ type UserDetails struct {
 // NewNickname creates new Nickname or returns an error if length is more than 256.
 func NewNickname(s string) (Nickname, error) {
 	if len(s) > 256 {
-		return "", fmt.Errorf("nickname too long: %d > 256", len(s))
+		return "", fmt.Errorf("nickname is too long: %d > 256", len(s))
 	}
 
 	return Nickname(s), nil
@@ -47,7 +47,7 @@ func MustNickname(s string) Nickname {
 // NewUserDescription creates new UserDescription or returns an error if description is more than 1024.
 func NewUserDescription(s string) (UserDescription, error) {
 	if len(s) > 1024 {
-		return "", fmt.Errorf("description too long: %d > 1024", len(s))
+		return "", fmt.Errorf("description is too long: %d > 1024", len(s))
 	}
 
 	return UserDescription(s), nil
@@ -66,7 +66,7 @@ func MustUserDescription(s string) UserDescription {
 // NewInterest creates new Interest or returns an error if length is more than 64.
 func NewInterest(s string) (Interest, error) {
 	if len(s) > 64 {
-		return "", fmt.Errorf("interest too long: %d > 64", len(s))
+		return "", fmt.Errorf("interest is too long: %d > 64", len(s))
 	}
 
 	return Interest(s), nil

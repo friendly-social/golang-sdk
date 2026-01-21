@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -42,23 +41,25 @@ func (c *Client) GetFileURL(descriptor *FileDescriptor) string {
 
 // UploadFile uploads file from disk to the server and returns corresponding descriptor.
 func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor, error) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
 
-	part, err := writer.CreateFormFile("file", filename)
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		var err error
+		defer func() {
+			writer.Close() //nolint:errcheck
+			pw.CloseWithError(err)
+		}()
 
-	if _, err := io.Copy(part, reader); err != nil {
-		return nil, err
-	}
+		part, err := writer.CreateFormFile("file", filename)
+		if err != nil {
+			return
+		}
 
-	if err := writer.Close(); err != nil {
-		return nil, err
-	}
+		_, err = io.Copy(part, reader)
+	}()
 
-	req, err := http.NewRequest("POST", c.url+"/files/upload", body)
+	req, err := http.NewRequest("POST", c.url+"/files/upload", pr)
 	if err != nil {
 		return nil, err
 	}
