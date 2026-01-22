@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -9,53 +11,186 @@ import (
 )
 
 func TestClients(t *testing.T) {
-	expectedTimeout := 30 * time.Second
+	t.Run("Default Client", func(t *testing.T) {
+		client := NewClient("https://example.com")
+		require.Equal(t, client.url, "https://example.com")
+		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
+	})
 
-	table := []struct {
-		name string
-		want string
-		got  *Client
-	}{
-		{"manual", "https://example.com", NewClient("https://example.com")},
-		{"localhost", "http://localhost:8080", NewLocalhostClient(8080)},
-		{"meetacy", "https://meetacy.app/friendly", NewMeetacyClient()},
-	}
+	t.Run("Localhost Client", func(t *testing.T) {
+		client := NewLocalhostClient(8080)
+		require.Equal(t, client.url, "http://localhost:8080")
+		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
+	})
 
-	for _, row := range table {
-		t.Run(row.name, func(t *testing.T) {
-			require.Equal(t, row.want, row.got.url)
-			require.Equal(t, expectedTimeout, row.got.http.Timeout)
-		})
-	}
+	t.Run("Meetacy Client", func(t *testing.T) {
+		client := NewMeetacyClient()
+		require.Equal(t, client.url, "https://meetacy.app/friendly")
+		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
+	})
 }
 
-func TestDo(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		defer gock.Off()
-		gock.New("https://getfriend.ly").
-			Get("/test").
-			MatchHeader("X-User-Id", "1").
-			MatchHeader("X-Token", "1").
-			Reply(200)
+func TestDoAndExecute(t *testing.T) {
+	type input struct {
+		host   string
+		path   string
+		method string
+		body   any
+		auth   *Authorization
+	}
 
-		client := NewClient("https://getfriend.ly")
-		resp, err := client.do("GET", "/test", &Authorization{Id: 1, AccessHash: "1", Token: "1"}, nil)
+	type response struct {
+		Trollge string
+	}
 
-		require.NotNil(t, resp)
-		require.NoError(t, err)
-	})
+	type testCase struct {
+		name             string
+		input            input
+		mockStatus       int
+		mockResponse     string
+		mockError        error
+		expectedHeaders  map[string]string
+		expectedBody     string
+		expectedResponse response
+		expectedError    error
+	}
 
-	t.Run("Invalid Body", func(t *testing.T) {
-		client := NewClient("https://getfriend.ly")
-		resp, err := client.do("GET", "/test", nil, struct{ Test func() }{func() {}})
-		require.Nil(t, resp)
-		require.Error(t, err)
-	})
+	cases := []testCase{
+		{
+			name: "Success",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+				body:   struct{ Field string }{"something interesting"},
+				auth: &Authorization{
+					Id:         1,
+					Token:      "token",
+					AccessHash: "hash",
+				},
+			},
+			mockStatus:   200,
+			mockResponse: `{"Trollge":"trollge"}`,
+			expectedBody: `{"Field":"something interesting"}`,
+			expectedHeaders: map[string]string{
+				"Content-Type": "application/json",
+				"X-User-Id":    "1",
+				"X-Token":      "token",
+			},
+			expectedResponse: response{
+				Trollge: "trollge",
+			},
+		},
+		{
+			name: "Failed Marshal Body",
+			input: input{
+				body: func() {},
+			},
+			expectedError: ErrFailedToMarshalBody,
+		},
+		{
+			name: "Invalid Path",
+			input: input{
+				host: "::invalid",
+			},
+			expectedError: ErrInvalidPath,
+		},
+		{
+			name: "Invalid Request",
+			input: input{
+				method: "BAD METHOD",
+			},
+			expectedError: ErrFailedToCreateRequest,
+		},
+		{
+			name: "Network Error",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+			},
+			mockError:     fmt.Errorf("some shit"),
+			expectedError: ErrFailedToExecuteRequest,
+		},
+		{
+			name: "Unauthorized",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+			},
+			mockStatus:     401,
+			expectedError: ErrRequestUnauthorized,
+		},
+		{
+			name: "Not Found",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+			},
+			mockStatus:     404,
+			expectedError: ErrRequestResourceNotFound,
+		},
+		{
+			name: "Something went wrong",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+			},
+			mockStatus:     418,
+			expectedError: ErrRequestFailed,
+		},
+		{
+			name: "Invalid response",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+			},
+			mockStatus:     200,
+			mockResponse: "invalid",
+			expectedError: ErrFailedToDecodeResponse,
+		},
+	}
 
-	t.Run("Invalid URL", func(t *testing.T) {
-		client := NewClient("://")
-		resp, err := client.do("GET", "/test", nil, nil)
-		require.Nil(t, resp)
-		require.Error(t, err)
-	})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer gock.Off()
+
+			r := gock.New(tc.input.host)
+			switch tc.input.method {
+			case "GET":
+				r = r.Get(tc.input.path)
+			case "POST":
+				r = r.Post(tc.input.path)
+			}
+
+			r = r.JSON(tc.expectedBody)
+			if tc.mockError != nil {
+				r.ReplyError(tc.mockError)
+			} else {
+				rr := r.Reply(tc.mockStatus)
+
+				for k, v := range tc.expectedHeaders {
+					rr = rr.SetHeader(k, v)
+				}
+
+				rr.JSON(tc.mockResponse)
+			}
+
+			var resp response
+			client := NewClient(tc.input.host)
+			err := client.do(tc.input.method, tc.input.path, tc.input.auth, tc.input.body, &resp)
+
+			if tc.expectedError != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedResponse, resp)
+			}
+		})
+	}
 }

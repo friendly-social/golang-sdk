@@ -1,11 +1,12 @@
 package sdk
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
+	"path"
 )
 
 // FileId represents the unique identifier of any file.
@@ -43,12 +44,15 @@ func (c *Client) GetFileURL(descriptor *FileDescriptor) string {
 func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor, error) {
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
+	filename = path.Base(filename)
 
 	go func() {
 		var err error
 		defer func() {
-			writer.Close() //nolint:errcheck
-			pw.CloseWithError(err)
+			if cerr := writer.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+			_ = pw.CloseWithError(err)
 		}()
 
 		part, err := writer.CreateFormFile("file", filename)
@@ -59,30 +63,25 @@ func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor,
 		_, err = io.Copy(part, reader)
 	}()
 
-	req, err := http.NewRequest("POST", c.url+"/files/upload", pr)
+	completePath, err := url.JoinPath(c.url, "/files/upload")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s + %s", ErrInvalidPath, c.url, "/files/upload")
 	}
 
+	req, err := http.NewRequest("POST", completePath, pr)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrFailedToCreateRequest, err)
+	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	resp, err := c.http.Do(req)
+	var resp uploadFileResponse
+	err = c.execute(req, &resp)
 	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("upload failed: status %d", resp.StatusCode)
-	}
-
-	var uploadResp uploadFileResponse
-	if err := json.NewDecoder(resp.Body).Decode(&uploadResp); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
 
 	return &FileDescriptor{
-		Id:         uploadResp.Id,
-		AccessHash: uploadResp.AccessHash,
+		Id:         resp.Id,
+		AccessHash: resp.AccessHash,
 	}, nil
 }

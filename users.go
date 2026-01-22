@@ -1,9 +1,7 @@
 package sdk
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // Nickname represents user's name (not unique).
@@ -84,22 +82,9 @@ func MustInterest(s string) Interest {
 
 // GetSelfDetails returns UserDetails structure for provided Authorization data.
 func (c *Client) GetSelfDetails(auth *Authorization) (*UserDetails, error) {
-	resp, err := c.do("GET", "/users/details", auth, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("unauthorized")
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("get details failed: status %d", resp.StatusCode)
-	}
-
 	var details UserDetails
-	if err := json.NewDecoder(resp.Body).Decode(&details); err != nil {
+	err := c.do("GET", "/users/details", auth, nil, &details)
+	if err != nil {
 		return nil, err
 	}
 
@@ -108,23 +93,9 @@ func (c *Client) GetSelfDetails(auth *Authorization) (*UserDetails, error) {
 
 // GetUserDetails returns UserDetails for provided user's ID and AccessHash from provided Authorization's perspective.
 func (c *Client) GetUserDetails(auth *Authorization, userId UserId, accessHash UserAccessHash) (*UserDetails, error) {
-	path := fmt.Sprintf("/users/details/%d/%s", userId, accessHash)
-	resp, err := c.do("GET", path, auth, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("unauthorized")
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("get user details failed: status %d", resp.StatusCode)
-	}
-
 	var details UserDetails
-	if err := json.NewDecoder(resp.Body).Decode(&details); err != nil {
+	err := c.do("GET", fmt.Sprintf("/users/details/%d/%s", userId, accessHash), auth, nil, &details)
+	if err != nil {
 		return nil, err
 	}
 

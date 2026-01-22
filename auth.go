@@ -1,9 +1,7 @@
 package sdk
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // UserId represents the unique identifier of user.
@@ -25,8 +23,8 @@ type Authorization struct {
 type generateRequest struct {
 	Nickname    Nickname        `json:"nickname"`
 	Description UserDescription `json:"description"`
-	Interests   []Interest      `json:"interests"`
-	Avatar      *FileDescriptor `json:"avatar"`
+	Interests   []Interest      `json:"interests,omitempty"`
+	Avatar      *FileDescriptor `json:"avatar,omitempty"`
 }
 
 type generateResponse struct {
@@ -35,10 +33,15 @@ type generateResponse struct {
 	Token      Token          `json:"token"`
 }
 
+var (
+	ErrTokenMustBe256CharactersLength          = fmt.Errorf("token must be 256 characters lenght")
+	ErrUserAccessHashMustBe256CharactersLength = fmt.Errorf("user access hash must be 256 characters lenght")
+)
+
 // NewToken creates new Token or returns an error if token's length isn't 256.
 func NewToken(s string) (Token, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("token must be 256 characters, got %d", len(s))
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrTokenMustBe256CharactersLength)
 	}
 
 	return Token(s), nil
@@ -47,7 +50,7 @@ func NewToken(s string) (Token, error) {
 // NewUserAccessHash creates new UserAccessHash or returns an error if hash length isn't 256.
 func NewUserAccessHash(s string) (UserAccessHash, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("access hash must be 256 characters, got %d", len(s))
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrUserAccessHashMustBe256CharactersLength)
 	}
 
 	return UserAccessHash(s), nil
@@ -62,24 +65,15 @@ func (c *Client) Generate(nickname Nickname, description UserDescription, intere
 		Avatar:      avatar,
 	}
 
-	resp, err := c.do("POST", "/auth/generate", nil, req)
+	var resp generateResponse
+	err := c.do("POST", "/auth/generate", nil, req, &resp)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("generate failed: status %d", resp.StatusCode)
-	}
-
-	var genResp generateResponse
-	if err := json.NewDecoder(resp.Body).Decode(&genResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, fmt.Errorf("request to /auth/generate failed: %w", err)
 	}
 
 	return &Authorization{
-		Id:         genResp.Id,
-		AccessHash: genResp.AccessHash,
-		Token:      genResp.Token,
+		Id:         resp.Id,
+		AccessHash: resp.AccessHash,
+		Token:      resp.Token,
 	}, nil
 }
