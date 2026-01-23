@@ -22,9 +22,10 @@ func TestGetFeedQueue(t *testing.T) {
 			name:         "Success",
 			auth:         &Authorization{Id: 1, Token: "token", AccessHash: "hash"},
 			mockStatus:   200,
-			mockResponse: `{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2}}]}`,
+			mockResponse: `{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2},"isRequest":true}]}`,
 			expectedFeed: &FeedQueue{
 				Entries: []FeedEntry{{
+						IsRequest: true,
 						IsExtendedNetwork: true,
 						CommonFriends:     []UserDetails{},
 						Details:           UserDetails{Id: 2},

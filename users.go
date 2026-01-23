@@ -13,6 +13,9 @@ type UserDescription string
 // Interest represents some user's interest.
 type Interest string
 
+// SocialLink represents link to user's external social network.
+type SocialLink string
+
 // UserDetails represents complete information about some user: ID, AccessHash, Nickname, Description, list of Interests and Avatar.
 type UserDetails struct {
 	Id          UserId          `json:"id"`
@@ -78,6 +81,25 @@ func MustInterest(s string) Interest {
 	}
 
 	return i
+}
+
+// NewSocialLink creates new SocialLink or returns an error if length is more than 2048.
+func NewSocialLink(s string) (SocialLink, error) {
+	if len(s) > 2048 {
+		return "", fmt.Errorf("social link is too long: %d > 64", len(s))
+	}
+
+	return SocialLink(s), nil
+}
+
+// MustSocialLink wraps NewSocialLink and panics on error.
+func MustSocialLink(s string) SocialLink {
+	l, err := NewSocialLink(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return l
 }
 
 // GetSelfDetails returns UserDetails structure for provided Authorization data.

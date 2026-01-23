@@ -40,6 +40,7 @@ func TestGenerate(t *testing.T) {
 		description UserDescription
 		interests   []Interest
 		avatar      *FileDescriptor
+		link        SocialLink
 	}
 
 	type testCase struct {
@@ -60,10 +61,11 @@ func TestGenerate(t *testing.T) {
 				description: "bio",
 				interests:   []Interest{"programming"},
 				avatar:      &FileDescriptor{Id: 10, AccessHash: "hash"},
+				link:        "https://github.com/Atennop1",
 			},
-			mockStatus:    200,
-			mockResponse:  `{"id":1,"token":"token","accessHash":"hash"}`,
-			expectedBody:  `{"nickname":"atennop", "description":"bio","interests":["programming"],"avatar":{"id":10,"accessHash":"hash"}}`,
+			mockStatus:   200,
+			mockResponse: `{"id":1,"token":"token","accessHash":"hash"}`,
+			expectedBody: `{"nickname":"atennop", "description":"bio","interests":["programming"],"avatar":{"id":10,"accessHash":"hash"},"socialLink":"https://github.com/Atennop1"}`,
 			expectedAuth: &Authorization{
 				Id:         1,
 				Token:      "token",
@@ -90,7 +92,7 @@ func TestGenerate(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			auth, err := client.Generate(tc.input.nickname, tc.input.description, tc.input.interests, tc.input.avatar)
+			auth, err := client.Generate(tc.input.nickname, tc.input.description, tc.input.interests, tc.input.avatar, tc.input.link)
 
 			if tc.expectedError != nil {
 				require.Error(t, err)

@@ -2,6 +2,7 @@ package sdk
 
 // FeedEntry represents single Entry from Feed.
 type FeedEntry struct {
+	IsRequest         bool          `json:"isRequest"`
 	IsExtendedNetwork bool          `json:"isExtendedNetwork"`
 	CommonFriends     []UserDetails `json:"commonFriends"`
 	Details           UserDetails   `json:"details"`

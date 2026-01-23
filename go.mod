@@ -3,7 +3,6 @@ module github.com/friendly-social/golang-sdk
 go 1.25.5
 
 require (
-	github.com/agiledragon/gomonkey v2.0.2+incompatible
 	github.com/h2non/gock v1.2.0
 	github.com/stretchr/testify v1.11.1
 )
