@@ -18,12 +18,8 @@ type Client struct {
 
 var (
 	ErrInvalidPath             = fmt.Errorf("invalid path")
-	ErrFailedToMarshalBody     = fmt.Errorf("failed to marshal request body")
-	ErrFailedToCreateRequest   = fmt.Errorf("failed to create request")
-	ErrFailedToExecuteRequest  = fmt.Errorf("failed to execute request")
 	ErrRequestUnauthorized     = fmt.Errorf("unauthorized")
 	ErrRequestResourceNotFound = fmt.Errorf("not found")
-	ErrFailedToDecodeResponse  = fmt.Errorf("failed to decode response")
 	ErrInternalServerError     = fmt.Errorf("internal server error")
 	ErrRequestFailed           = fmt.Errorf("request failed")
 )
@@ -54,7 +50,7 @@ func (c *Client) do(method, path string, auth *Authorization, body any, result a
 	if body != nil {
 		jsonData, err := json.Marshal(body)
 		if err != nil {
-			return fmt.Errorf("%w: %w", ErrFailedToMarshalBody, err)
+			return fmt.Errorf("failed to marshal body: %w", err)
 		}
 
 		bodyReader = bytes.NewReader(jsonData)
@@ -67,7 +63,7 @@ func (c *Client) do(method, path string, auth *Authorization, body any, result a
 
 	req, err := http.NewRequest(method, completePath, bodyReader)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrFailedToCreateRequest, err)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -83,14 +79,14 @@ func (c *Client) do(method, path string, auth *Authorization, body any, result a
 func (c *Client) execute(req *http.Request, result any) error {
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrFailedToExecuteRequest, err)
+		return fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if result != nil {
 			if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
-				return fmt.Errorf("%w: %w", ErrFailedToDecodeResponse, err)
+				return fmt.Errorf("failed to decode response: %w", err)
 			}
 		}
 		return nil

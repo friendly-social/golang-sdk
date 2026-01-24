@@ -26,10 +26,14 @@ type uploadFileResponse struct {
 	AccessHash FileAccessHash `json:"accessHash"`
 }
 
+var (
+	ErrFileAccessHashMustBe256CharactersLength = fmt.Errorf("file access hash must be 256 characters lenght")
+)
+
 // NewFileAccessHash creates new FileAccessHash or returns an error if hash length isn't 256.
 func NewFileAccessHash(s string) (FileAccessHash, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("file access hash must be 256 characters, got %d", len(s))
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrFileAccessHashMustBe256CharactersLength)
 	}
 
 	return FileAccessHash(s), nil
@@ -70,7 +74,7 @@ func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor,
 
 	req, err := http.NewRequest("POST", completePath, pr)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrFailedToCreateRequest, err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 

@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetFeedQueue(t *testing.T) {
+func TestGetNetworkDetails(t *testing.T) {
 	type testCase struct {
-		name          string
-		auth          *Authorization
-		mockStatus    int
-		mockResponse  string
-		expectedFeed  *FeedQueue
-		expectedError error
+		name            string
+		auth            *Authorization
+		mockStatus      int
+		mockResponse    string
+		expectedNetwork *NetworkDetails
+		expectedError   error
 	}
 
 	cases := []testCase{
@@ -22,13 +22,20 @@ func TestGetFeedQueue(t *testing.T) {
 			name:         "Success",
 			auth:         &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
 			mockStatus:   200,
-			mockResponse: `{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2},"isRequest":true}]}`,
-			expectedFeed: &FeedQueue{
-				Entries: []FeedEntry{{
-					IsRequest:         true,
-					IsExtendedNetwork: true,
-					CommonFriends:     []UserDetails{},
-					Details:           UserDetails{Id: 2},
+			mockResponse: `{"friends":[{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}]}`,
+			expectedNetwork: &NetworkDetails{
+				Friends: []UserDetails{{
+					Id:          2,
+					AccessHash:  UserAccessHash("hash2"),
+					Nickname:    Nickname("tr3ble"),
+					Description: UserDescription("something2"),
+					Interests: []Interest{
+						Interest("mac"),
+					},
+					Avatar: &FileDescriptor{
+						Id:         3,
+						AccessHash: FileAccessHash("hash3"),
+					},
 				}},
 			},
 		},
@@ -45,7 +52,7 @@ func TestGetFeedQueue(t *testing.T) {
 			defer gock.Off()
 
 			gock.New("https://getfriend.ly").
-				Get("/feed/queue").
+				Get("/network/details").
 				MatchHeader("Content-Type", "application/json").
 				MatchHeader("X-User-Id", "1").
 				MatchHeader("X-Token", "token").
@@ -53,14 +60,14 @@ func TestGetFeedQueue(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			feed, err := client.GetFeedQueue(tc.auth)
+			network, err := client.GetNetworkDetails(tc.auth)
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tc.expectedFeed, feed)
+				require.Equal(t, tc.expectedNetwork, network)
 			}
 		})
 	}

@@ -1,6 +1,6 @@
 package sdk
 
-// NetworkDetails represents details about user's network, particularly their Friends list.
+// NetworkDetails represents details about user's network, particularly their friends list.
 type NetworkDetails struct {
 	Friends []UserDetails `json:"friends"`
 }

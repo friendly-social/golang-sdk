@@ -1,5 +1,7 @@
 package sdk
 
+import "fmt"
+
 // FeedEntry represents single Entry from Feed.
 type FeedEntry struct {
 	IsRequest         bool          `json:"isRequest"`
@@ -18,7 +20,7 @@ func (c *Client) GetFeedQueue(auth *Authorization) (*FeedQueue, error) {
 	var feed FeedQueue
 	err := c.do("GET", "/feed/queue", auth, nil, &feed)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get feed queue: %w", err)
 	}
 
 	return &feed, nil

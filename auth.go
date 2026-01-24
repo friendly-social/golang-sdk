@@ -21,11 +21,11 @@ type Authorization struct {
 }
 
 type generateRequest struct {
-	Nickname    Nickname        `json:"nickname"`
-	Description UserDescription `json:"description"`
-	Interests   []Interest      `json:"interests"`
-	Avatar      *FileDescriptor `json:"avatar"`
-	SocialLink  SocialLink      `json:"socialLink"`
+	Nickname    *Nickname        `json:"nickname"`
+	Description *UserDescription `json:"description"`
+	Interests   []Interest       `json:"interests"`
+	Avatar      *FileDescriptor  `json:"avatar"`
+	SocialLink  *SocialLink      `json:"socialLink"`
 }
 
 type generateResponse struct {
@@ -60,17 +60,17 @@ func NewUserAccessHash(s string) (UserAccessHash, error) {
 // Generate makes request for creating account using provided data and returns Authorization structure.
 func (c *Client) Generate(nickname Nickname, description UserDescription, interests []Interest, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {
 	req := generateRequest{
-		Nickname:    nickname,
-		Description: description,
+		Nickname:    &nickname,
+		Description: &description,
 		Interests:   interests,
 		Avatar:      avatar,
-		SocialLink:  link,
+		SocialLink:  &link,
 	}
 
 	var resp generateResponse
 	err := c.do("POST", "/auth/generate", nil, req, &resp)
 	if err != nil {
-		return nil, fmt.Errorf("request to /auth/generate failed: %w", err)
+		return nil, fmt.Errorf("failed to generate account: %w", err)
 	}
 
 	return &Authorization{

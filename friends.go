@@ -8,13 +8,13 @@ import (
 type FriendToken string
 
 type addFriendRequest struct {
-	Token  FriendToken `json:"token"`
-	UserId UserId      `json:"userId"`
+	UserId UserId       `json:"userId"`
+	Token  *FriendToken `json:"token"`
 }
 
 type friendRequestRequest struct {
-	UserId     UserId         `json:"userId"`
-	AccessHash UserAccessHash `json:"userAccessHash"`
+	UserId     UserId          `json:"userId"`
+	AccessHash *UserAccessHash `json:"userAccessHash"`
 }
 
 type generateFriendTokenResponse struct {
@@ -25,10 +25,15 @@ type addFriendResponse struct {
 	Type string `json:"type"`
 }
 
+var (
+	ErrFriendTokenMustBe256CharactersLength = fmt.Errorf("friend token must be 256 characters lenght")
+	ErrFriendTokenExpired                   = fmt.Errorf("friend token expired")
+)
+
 // NewFriendToken creates new FriendToken or returns an error if tokens length isn't 256.
 func NewFriendToken(s string) (FriendToken, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("friend token must be 256 characters, got %d", len(s))
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrFriendTokenMustBe256CharactersLength)
 	}
 
 	return FriendToken(s), nil
@@ -39,7 +44,7 @@ func (c *Client) GenerateFriendToken(auth *Authorization) (FriendToken, error) {
 	var resp generateFriendTokenResponse
 	err := c.do("POST", "/friends/generate", auth, nil, &resp)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate friend token: %w", err)
 	}
 
 	return resp.Token, nil
@@ -48,18 +53,18 @@ func (c *Client) GenerateFriendToken(auth *Authorization) (FriendToken, error) {
 // AddFriend makes request to add user with provided FriendToken and ID to Authorization's friends list.
 func (c *Client) AddFriend(auth *Authorization, token FriendToken, userId UserId) error {
 	req := addFriendRequest{
-		Token:  token,
 		UserId: userId,
+		Token:  &token,
 	}
 
 	var resp addFriendResponse
-	err := c.do("POST", "/friends/add", auth, req, nil)
+	err := c.do("POST", "/friends/add", auth, req, &resp)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add friend: %w", err)
 	}
 
 	if resp.Type == "FriendTokenExpired" {
-		return fmt.Errorf("friend token expired")
+		return ErrFriendTokenExpired
 	}
 
 	return nil
@@ -69,12 +74,12 @@ func (c *Client) AddFriend(auth *Authorization, token FriendToken, userId UserId
 func (c *Client) SendFriendRequest(auth *Authorization, userId UserId, accessHash UserAccessHash) error {
 	req := friendRequestRequest{
 		UserId:     userId,
-		AccessHash: accessHash,
+		AccessHash: &accessHash,
 	}
 
 	err := c.do("POST", "/friends/request", auth, req, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to send friend request: %w", err)
 	}
 
 	return nil
@@ -84,12 +89,12 @@ func (c *Client) SendFriendRequest(auth *Authorization, userId UserId, accessHas
 func (c *Client) DeclineFriendRequest(auth *Authorization, userId UserId, accessHash UserAccessHash) error {
 	req := friendRequestRequest{
 		UserId:     userId,
-		AccessHash: accessHash,
+		AccessHash: &accessHash,
 	}
 
 	err := c.do("POST", "/friends/decline", auth, req, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to decline friend request: %w", err)
 	}
 
 	return nil

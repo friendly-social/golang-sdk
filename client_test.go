@@ -52,6 +52,7 @@ func TestDoAndExecute(t *testing.T) {
 		expectedHeaders  map[string]string
 		expectedBody     string
 		expectedResponse response
+		expectError      bool
 		expectedError    error
 	}
 
@@ -65,8 +66,8 @@ func TestDoAndExecute(t *testing.T) {
 				body:   struct{ Field string }{"something interesting"},
 				auth: &Authorization{
 					Id:         1,
-					Token:      "token",
-					AccessHash: "hash",
+					Token:      Token("token"),
+					AccessHash: UserAccessHash("hash"),
 				},
 			},
 			mockStatus:   200,
@@ -86,7 +87,7 @@ func TestDoAndExecute(t *testing.T) {
 			input: input{
 				body: func() {},
 			},
-			expectedError: ErrFailedToMarshalBody,
+			expectError: true,
 		},
 		{
 			name: "Invalid Path",
@@ -100,7 +101,7 @@ func TestDoAndExecute(t *testing.T) {
 			input: input{
 				method: "BAD METHOD",
 			},
-			expectedError: ErrFailedToCreateRequest,
+			expectError: true,
 		},
 		{
 			name: "Network Error",
@@ -109,8 +110,8 @@ func TestDoAndExecute(t *testing.T) {
 				method: "GET",
 				path:   "/ping",
 			},
-			mockError:     fmt.Errorf("some shit"),
-			expectedError: ErrFailedToExecuteRequest,
+			mockError:   fmt.Errorf("some shit"),
+			expectError: true,
 		},
 		{
 			name: "Unauthorized",
@@ -119,7 +120,7 @@ func TestDoAndExecute(t *testing.T) {
 				method: "GET",
 				path:   "/ping",
 			},
-			mockStatus:     401,
+			mockStatus:    401,
 			expectedError: ErrRequestUnauthorized,
 		},
 		{
@@ -129,7 +130,7 @@ func TestDoAndExecute(t *testing.T) {
 				method: "GET",
 				path:   "/ping",
 			},
-			mockStatus:     404,
+			mockStatus:    404,
 			expectedError: ErrRequestResourceNotFound,
 		},
 		{
@@ -139,7 +140,7 @@ func TestDoAndExecute(t *testing.T) {
 				method: "GET",
 				path:   "/ping",
 			},
-			mockStatus:     418,
+			mockStatus:    418,
 			expectedError: ErrRequestFailed,
 		},
 		{
@@ -149,9 +150,9 @@ func TestDoAndExecute(t *testing.T) {
 				method: "GET",
 				path:   "/ping",
 			},
-			mockStatus:     200,
+			mockStatus:   200,
 			mockResponse: "invalid",
-			expectedError: ErrFailedToDecodeResponse,
+			expectError:  true,
 		},
 	}
 
@@ -167,17 +168,16 @@ func TestDoAndExecute(t *testing.T) {
 				r = r.Post(tc.input.path)
 			}
 
+			for k, v := range tc.expectedHeaders {
+				r = r.MatchHeader(k, v)
+			}
+
 			r = r.JSON(tc.expectedBody)
 			if tc.mockError != nil {
 				r.ReplyError(tc.mockError)
 			} else {
-				rr := r.Reply(tc.mockStatus)
-
-				for k, v := range tc.expectedHeaders {
-					rr = rr.SetHeader(k, v)
-				}
-
-				rr.JSON(tc.mockResponse)
+				r.Reply(tc.mockStatus).
+					JSON(tc.mockResponse)
 			}
 
 			var resp response
@@ -187,6 +187,8 @@ func TestDoAndExecute(t *testing.T) {
 			if tc.expectedError != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tc.expectedError)
+			} else if tc.expectError {
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedResponse, resp)

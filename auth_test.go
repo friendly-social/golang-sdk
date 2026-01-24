@@ -11,7 +11,7 @@ import (
 func TestAuthValueTypes(t *testing.T) {
 	t.Run("Valid Token", func(t *testing.T) {
 		token, err := NewToken(strings.Repeat("1", 256))
-		require.Equal(t, Token(strings.Repeat("1", 256)), token)
+		require.EqualValues(t, Token(strings.Repeat("1", 256)), token)
 		require.NoError(t, err)
 	})
 
@@ -23,7 +23,7 @@ func TestAuthValueTypes(t *testing.T) {
 
 	t.Run("Valid UserAccesssHash", func(t *testing.T) {
 		hash, err := NewUserAccessHash(strings.Repeat("1", 256))
-		require.Equal(t, UserAccessHash(strings.Repeat("1", 256)), hash)
+		require.EqualValues(t, UserAccessHash(strings.Repeat("1", 256)), hash)
 		require.NoError(t, err)
 	})
 
@@ -57,27 +57,25 @@ func TestGenerate(t *testing.T) {
 		{
 			name: "Success",
 			input: input{
-				nickname:    "atennop",
-				description: "bio",
-				interests:   []Interest{"programming"},
-				avatar:      &FileDescriptor{Id: 10, AccessHash: "hash"},
-				link:        "https://github.com/Atennop1",
+				nickname:    Nickname("atennop"),
+				description: UserDescription("bio"),
+				interests:   []Interest{Interest("programming")},
+				avatar:      &FileDescriptor{Id: 10, AccessHash: FileAccessHash("hash")},
+				link:        SocialLink("https://github.com/Atennop1"),
 			},
 			mockStatus:   200,
 			mockResponse: `{"id":1,"token":"token","accessHash":"hash"}`,
 			expectedBody: `{"nickname":"atennop", "description":"bio","interests":["programming"],"avatar":{"id":10,"accessHash":"hash"},"socialLink":"https://github.com/Atennop1"}`,
 			expectedAuth: &Authorization{
 				Id:         1,
-				Token:      "token",
-				AccessHash: "hash",
+				Token:      Token("token"),
+				AccessHash: UserAccessHash("hash"),
 			},
 		},
 		{
 			name:          "API Error",
 			mockStatus:    400,
-			mockResponse:  "",
 			expectedError: ErrRequestFailed,
-			expectedAuth:  nil,
 		},
 	}
 
