@@ -25,7 +25,7 @@ func TestClients(t *testing.T) {
 
 	t.Run("Meetacy Client", func(t *testing.T) {
 		client := NewMeetacyClient()
-		require.Equal(t, client.url, "https://meetacy.app/friendly")
+		require.Equal(t, client.url, "https://friendly.meetacy.app/")
 		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
 	})
 }

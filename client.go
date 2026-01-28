@@ -41,7 +41,7 @@ func NewLocalhostClient(port int) *Client {
 
 // NewMeetacyClient creates Client with Meetacy URL.
 func NewMeetacyClient() *Client {
-	return NewClient("https://meetacy.app/friendly")
+	return NewClient("https://friendly.meetacy.app/")
 }
 
 // do creates and executes HTTP request to given path using provided data and fills unmarshalled response to result argument or returns an error if something went wrong.
