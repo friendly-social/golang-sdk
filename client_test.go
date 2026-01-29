@@ -23,9 +23,9 @@ func TestClients(t *testing.T) {
 		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
 	})
 
-	t.Run("Meetacy Client", func(t *testing.T) {
-		client := NewMeetacyClient()
-		require.Equal(t, client.url, "https://friendly.meetacy.app/")
+	t.Run("Production Client", func(t *testing.T) {
+		client := NewProductionClient()
+		require.Equal(t, client.url, "https://api.getfriend.ly/")
 		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
 	})
 }
@@ -94,7 +94,7 @@ func TestDoAndExecute(t *testing.T) {
 			input: input{
 				host: "::invalid",
 			},
-			expectedError: ErrInvalidPath,
+			expectError: true,
 		},
 		{
 			name: "Invalid Request",
@@ -121,7 +121,17 @@ func TestDoAndExecute(t *testing.T) {
 				path:   "/ping",
 			},
 			mockStatus:    401,
-			expectedError: ErrRequestUnauthorized,
+			expectedError: ErrUnauthorized,
+		},
+		{
+			name: "Forbidden",
+			input: input{
+				host:   "https://getfriend.ly",
+				method: "GET",
+				path:   "/ping",
+			},
+			mockStatus:    403,
+			expectedError: ErrForbidden,
 		},
 		{
 			name: "Not Found",
@@ -131,7 +141,7 @@ func TestDoAndExecute(t *testing.T) {
 				path:   "/ping",
 			},
 			mockStatus:    404,
-			expectedError: ErrRequestResourceNotFound,
+			expectedError: ErrNotFound,
 		},
 		{
 			name: "Something went wrong",
@@ -141,7 +151,7 @@ func TestDoAndExecute(t *testing.T) {
 				path:   "/ping",
 			},
 			mockStatus:    418,
-			expectedError: ErrRequestFailed,
+			expectError: true,
 		},
 		{
 			name: "Invalid response",

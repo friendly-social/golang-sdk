@@ -17,11 +17,9 @@ type Client struct {
 }
 
 var (
-	ErrInvalidPath             = fmt.Errorf("invalid path")
-	ErrRequestUnauthorized     = fmt.Errorf("unauthorized")
-	ErrRequestResourceNotFound = fmt.Errorf("not found")
-	ErrInternalServerError     = fmt.Errorf("internal server error")
-	ErrRequestFailed           = fmt.Errorf("request failed")
+	ErrUnauthorized = fmt.Errorf("unauthorized")
+	ErrForbidden    = fmt.Errorf("forbidden")
+	ErrNotFound     = fmt.Errorf("not found")
 )
 
 // NewClient creates basic Client with provided URL (on which backend is located).
@@ -39,9 +37,9 @@ func NewLocalhostClient(port int) *Client {
 	return NewClient(fmt.Sprintf("http://localhost:%d", port))
 }
 
-// NewMeetacyClient creates Client with Meetacy URL.
-func NewMeetacyClient() *Client {
-	return NewClient("https://friendly.meetacy.app/")
+// NewProductionClient creates Client with Meetacy URL.
+func NewProductionClient() *Client {
+	return NewClient("https://api.getfriend.ly/")
 }
 
 // do creates and executes HTTP request to given path using provided data and fills unmarshalled response to result argument or returns an error if something went wrong.
@@ -58,7 +56,7 @@ func (c *Client) do(method, path string, auth *Authorization, body any, result a
 
 	completePath, err := url.JoinPath(c.url, path)
 	if err != nil {
-		return fmt.Errorf("%w: %s + %s", ErrInvalidPath, c.url, path)
+		return fmt.Errorf("invalid path: %s + %s", c.url, path)
 	}
 
 	req, err := http.NewRequest(method, completePath, bodyReader)
@@ -94,12 +92,12 @@ func (c *Client) execute(req *http.Request, result any) error {
 
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrRequestUnauthorized)
+		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrUnauthorized)
+	case http.StatusForbidden:
+		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrForbidden)
 	case http.StatusNotFound:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrRequestResourceNotFound)
-	case http.StatusInternalServerError:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrInternalServerError)
+		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrNotFound)
 	default:
-		return fmt.Errorf("%s %s with status %d: %w", req.Method, req.URL.Path, resp.StatusCode, ErrRequestFailed)
+		return fmt.Errorf("%s %s: unexpected request with status code %d", req.Method, req.URL.Path, resp.StatusCode)
 	}
 }

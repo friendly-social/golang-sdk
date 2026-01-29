@@ -35,14 +35,14 @@ type generateResponse struct {
 }
 
 var (
-	ErrTokenMustBe256CharactersLength          = fmt.Errorf("token must be 256 characters lenght")
-	ErrUserAccessHashMustBe256CharactersLength = fmt.Errorf("user access hash must be 256 characters lenght")
+	ErrTokenLengthMustBe256          = fmt.Errorf("token must be 256 characters long")
+	ErrUserAccessHashLengthMustBe256 = fmt.Errorf("user access hash must be 256 characters long")
 )
 
 // NewToken creates new Token or returns an error if token's length isn't 256.
 func NewToken(s string) (Token, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrTokenMustBe256CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrTokenLengthMustBe256)
 	}
 
 	return Token(s), nil
@@ -51,7 +51,7 @@ func NewToken(s string) (Token, error) {
 // NewUserAccessHash creates new UserAccessHash or returns an error if hash length isn't 256.
 func NewUserAccessHash(s string) (UserAccessHash, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrUserAccessHashMustBe256CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrUserAccessHashLengthMustBe256)
 	}
 
 	return UserAccessHash(s), nil

@@ -18,7 +18,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid Nickname", func(t *testing.T) {
 		_, err := NewNickname(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrNicknameMustBeLessThan256CharactersLength)
+		require.ErrorIs(t, err, ErrNicknameLengthMustBeLessThan256)
 	})
 
 	t.Run("Valid Description", func(t *testing.T) {
@@ -30,7 +30,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid Description", func(t *testing.T) {
 		_, err := NewUserDescription(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrUserDescriptionMustBeLessThan1024CharactersLength)
+		require.ErrorIs(t, err, ErrUserDescriptionLengthMustBeLessThan1024)
 	})
 
 	t.Run("Valid Interest", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid Interest", func(t *testing.T) {
 		_, err := NewInterest(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrInterestMustBeLessThan64CharactersLength)
+		require.ErrorIs(t, err, ErrInterestLengthMustBeLessThan64)
 	})
 
 	t.Run("Valid SocialLink", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid SocialLink", func(t *testing.T) {
 		_, err := NewSocialLink(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrSocialLinkMustBeLessThan2048CharactersLength)
+		require.ErrorIs(t, err, ErrSocialLinkLengthMustBeLessThan2048)
 	})
 }
 
@@ -65,7 +65,7 @@ func TestGetSelfDetails(t *testing.T) {
 		mockStatus      int
 		mockResponse    string
 		expectedDetails *UserDetails
-		expectedError   error
+		expectError     bool
 	}
 
 	cases := []testCase{
@@ -89,10 +89,10 @@ func TestGetSelfDetails(t *testing.T) {
 			},
 		},
 		{
-			name:          "API Error",
-			auth:          &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
-			mockStatus:    500,
-			expectedError: ErrInternalServerError,
+			name:        "API Error",
+			auth:        &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
+			mockStatus:  500,
+			expectError: true,
 		},
 	}
 
@@ -111,9 +111,8 @@ func TestGetSelfDetails(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			self, err := client.GetSelfDetails(tc.auth)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedDetails, self)
@@ -135,7 +134,7 @@ func TestGetUserDetails(t *testing.T) {
 		mockStatus      int
 		mockResponse    string
 		expectedDetails *UserDetails
-		expectedError   error
+		expectError     bool
 	}
 
 	cases := []testCase{
@@ -169,8 +168,8 @@ func TestGetUserDetails(t *testing.T) {
 				id:   2,
 				hash: UserAccessHash("hash2"),
 			},
-			mockStatus:    500,
-			expectedError: ErrInternalServerError,
+			mockStatus:  500,
+			expectError: true,
 		},
 	}
 
@@ -189,9 +188,8 @@ func TestGetUserDetails(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			user, err := client.GetUserDetails(tc.input.auth, tc.input.id, tc.input.hash)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedDetails, user)

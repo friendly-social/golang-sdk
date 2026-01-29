@@ -14,7 +14,7 @@ func TestGetNetworkDetails(t *testing.T) {
 		mockStatus      int
 		mockResponse    string
 		expectedNetwork *NetworkDetails
-		expectedError   error
+		expectError     bool
 	}
 
 	cases := []testCase{
@@ -40,10 +40,10 @@ func TestGetNetworkDetails(t *testing.T) {
 			},
 		},
 		{
-			name:          "API Error",
-			auth:          &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
-			mockStatus:    500,
-			expectedError: ErrInternalServerError,
+			name:        "API Error",
+			auth:        &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
+			mockStatus:  500,
+			expectError: true,
 		},
 	}
 
@@ -62,9 +62,8 @@ func TestGetNetworkDetails(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			network, err := client.GetNetworkDetails(tc.auth)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedNetwork, network)

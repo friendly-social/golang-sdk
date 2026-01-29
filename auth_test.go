@@ -18,7 +18,7 @@ func TestAuthValueTypes(t *testing.T) {
 	t.Run("Invalid Token", func(t *testing.T) {
 		_, err := NewToken("1")
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrTokenMustBe256CharactersLength)
+		require.ErrorIs(t, err, ErrTokenLengthMustBe256)
 	})
 
 	t.Run("Valid UserAccesssHash", func(t *testing.T) {
@@ -30,7 +30,7 @@ func TestAuthValueTypes(t *testing.T) {
 	t.Run("Invalid UserAccessHash", func(t *testing.T) {
 		_, err := NewUserAccessHash("1")
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrUserAccessHashMustBe256CharactersLength)
+		require.ErrorIs(t, err, ErrUserAccessHashLengthMustBe256)
 	})
 }
 
@@ -50,7 +50,7 @@ func TestGenerate(t *testing.T) {
 		mockResponse  string
 		expectedBody  string
 		expectedAuth  *Authorization
-		expectedError error
+		expectError   bool
 	}
 
 	cases := []testCase{
@@ -73,9 +73,9 @@ func TestGenerate(t *testing.T) {
 			},
 		},
 		{
-			name:          "API Error",
-			mockStatus:    400,
-			expectedError: ErrRequestFailed,
+			name:        "API Error",
+			mockStatus:  400,
+			expectError: true,
 		},
 	}
 
@@ -92,9 +92,8 @@ func TestGenerate(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			auth, err := client.Generate(tc.input.nickname, tc.input.description, tc.input.interests, tc.input.avatar, tc.input.link)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedAuth, auth)

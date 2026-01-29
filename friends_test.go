@@ -18,7 +18,7 @@ func TestFriendValueTypes(t *testing.T) {
 	t.Run("Invalid FriendToken", func(t *testing.T) {
 		_, err := NewFriendToken("1")
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrFriendTokenMustBe256CharactersLength)
+		require.ErrorIs(t, err, ErrFriendTokenLengthMustBe256)
 	})
 }
 
@@ -29,7 +29,7 @@ func TestGenerateFriendToken(t *testing.T) {
 		mockStatus          int
 		mockResponse        string
 		expectedFriendToken FriendToken
-		expectedError       error
+		expectError         bool
 	}
 
 	cases := []testCase{
@@ -41,10 +41,10 @@ func TestGenerateFriendToken(t *testing.T) {
 			expectedFriendToken: FriendToken("token2"),
 		},
 		{
-			name:          "API Error",
-			auth:          &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
-			mockStatus:    500,
-			expectedError: ErrInternalServerError,
+			name:        "API Error",
+			auth:        &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
+			mockStatus:  500,
+			expectError: true,
 		},
 	}
 
@@ -63,9 +63,8 @@ func TestGenerateFriendToken(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			token, err := client.GenerateFriendToken(tc.auth)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedFriendToken, token)
@@ -87,6 +86,7 @@ func TestAddFriend(t *testing.T) {
 		mockStatus    int
 		mockResponse  string
 		expectedBody  string
+		expectError   bool
 		expectedError error
 	}
 
@@ -110,10 +110,10 @@ func TestAddFriend(t *testing.T) {
 			expectedError: ErrFriendTokenExpired,
 		},
 		{
-			name:          "API Error",
-			input:         input{auth: &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}},
-			mockStatus:    400,
-			expectedError: ErrRequestFailed,
+			name:        "API Error",
+			input:       input{auth: &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}},
+			mockStatus:  400,
+			expectError: true,
 		},
 	}
 
@@ -136,6 +136,8 @@ func TestAddFriend(t *testing.T) {
 			if tc.expectedError != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tc.expectedError)
+			} else if tc.expectError {
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
@@ -155,7 +157,7 @@ func TestSendFriendRequest(t *testing.T) {
 		input         input
 		mockStatus    int
 		expectedBody  string
-		expectedError error
+		expectError   bool
 	}
 
 	cases := []testCase{
@@ -170,10 +172,10 @@ func TestSendFriendRequest(t *testing.T) {
 			expectedBody: `{"userId":2, "userAccessHash":"hash2"}`,
 		},
 		{
-			name:          "API Error",
-			input:         input{auth: &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}},
-			mockStatus:    400,
-			expectedError: ErrRequestFailed,
+			name:        "API Error",
+			input:       input{auth: &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}},
+			mockStatus:  400,
+			expectError: true,
 		},
 	}
 
@@ -192,9 +194,8 @@ func TestSendFriendRequest(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			err := client.SendFriendRequest(tc.input.auth, tc.input.id, tc.input.hash)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 			}
@@ -214,7 +215,7 @@ func TestDeclineFriendRequest(t *testing.T) {
 		input         input
 		mockStatus    int
 		expectedBody  string
-		expectedError error
+		expectError   bool
 	}
 
 	cases := []testCase{
@@ -229,10 +230,10 @@ func TestDeclineFriendRequest(t *testing.T) {
 			expectedBody: `{"userId":2, "userAccessHash":"hash2"}`,
 		},
 		{
-			name:          "API Error",
-			input:         input{auth: &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}},
-			mockStatus:    400,
-			expectedError: ErrRequestFailed,
+			name:        "API Error",
+			input:       input{auth: &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}},
+			mockStatus:  400,
+			expectError: true,
 		},
 	}
 
@@ -251,9 +252,8 @@ func TestDeclineFriendRequest(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			err := client.DeclineFriendRequest(tc.input.auth, tc.input.id, tc.input.hash)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 			}

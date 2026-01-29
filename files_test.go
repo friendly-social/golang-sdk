@@ -17,7 +17,7 @@ func TestFilesValueTypes(t *testing.T) {
 	t.Run("Invalid FileAccessHash", func(t *testing.T) {
 		_, err := NewFileAccessHash("1")
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrFileAccessHashMustBe256CharactersLength)
+		require.ErrorIs(t, err, ErrFileAccessHashLengthMustBe256)
 	})
 }
 

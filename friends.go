@@ -26,14 +26,14 @@ type addFriendResponse struct {
 }
 
 var (
-	ErrFriendTokenMustBe256CharactersLength = fmt.Errorf("friend token must be 256 characters lenght")
-	ErrFriendTokenExpired                   = fmt.Errorf("friend token expired")
+	ErrFriendTokenLengthMustBe256 = fmt.Errorf("friend token must be 256 characters lenght")
+	ErrFriendTokenExpired         = fmt.Errorf("friend token expired")
 )
 
 // NewFriendToken creates new FriendToken or returns an error if tokens length isn't 256.
 func NewFriendToken(s string) (FriendToken, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrFriendTokenMustBe256CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrFriendTokenLengthMustBe256)
 	}
 
 	return FriendToken(s), nil

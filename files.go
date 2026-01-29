@@ -27,13 +27,13 @@ type uploadFileResponse struct {
 }
 
 var (
-	ErrFileAccessHashMustBe256CharactersLength = fmt.Errorf("file access hash must be 256 characters lenght")
+	ErrFileAccessHashLengthMustBe256 = fmt.Errorf("file access hash must be 256 characters lenght")
 )
 
 // NewFileAccessHash creates new FileAccessHash or returns an error if hash length isn't 256.
 func NewFileAccessHash(s string) (FileAccessHash, error) {
 	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrFileAccessHashMustBe256CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrFileAccessHashLengthMustBe256)
 	}
 
 	return FileAccessHash(s), nil
@@ -69,7 +69,7 @@ func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor,
 
 	completePath, err := url.JoinPath(c.url, "/files/upload")
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s + %s", ErrInvalidPath, c.url, "/files/upload")
+		return nil, fmt.Errorf("invalid path: %s + %s", c.url, "/files/upload")
 	}
 
 	req, err := http.NewRequest("POST", completePath, pr)
@@ -81,6 +81,7 @@ func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor,
 	var resp uploadFileResponse
 	err = c.execute(req, &resp)
 	if err != nil {
+		// add error mapping here
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
 

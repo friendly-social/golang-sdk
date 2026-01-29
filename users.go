@@ -27,16 +27,16 @@ type UserDetails struct {
 }
 
 var (
-	ErrNicknameMustBeLessThan256CharactersLength         = fmt.Errorf("nickname must be less than 256 characters lenght")
-	ErrUserDescriptionMustBeLessThan1024CharactersLength = fmt.Errorf("user description must be less than 1024 characters lenght")
-	ErrInterestMustBeLessThan64CharactersLength          = fmt.Errorf("interest must be less than 64 characters lenght")
-	ErrSocialLinkMustBeLessThan2048CharactersLength      = fmt.Errorf("social link must be less than 2048 characters lenght")
+	ErrNicknameLengthMustBeLessThan256         = fmt.Errorf("nickname must be less than 256 characters lenght")
+	ErrUserDescriptionLengthMustBeLessThan1024 = fmt.Errorf("user description must be less than 1024 characters lenght")
+	ErrInterestLengthMustBeLessThan64          = fmt.Errorf("interest must be less than 64 characters lenght")
+	ErrSocialLinkLengthMustBeLessThan2048      = fmt.Errorf("social link must be less than 2048 characters lenght")
 )
 
 // NewNickname creates new Nickname or returns an error if length is more than 256.
 func NewNickname(s string) (Nickname, error) {
 	if len(s) > 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrNicknameMustBeLessThan256CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrNicknameLengthMustBeLessThan256)
 	}
 
 	return Nickname(s), nil
@@ -45,7 +45,7 @@ func NewNickname(s string) (Nickname, error) {
 // NewUserDescription creates new UserDescription or returns an error if description is more than 1024.
 func NewUserDescription(s string) (UserDescription, error) {
 	if len(s) > 1024 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrUserDescriptionMustBeLessThan1024CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrUserDescriptionLengthMustBeLessThan1024)
 	}
 
 	return UserDescription(s), nil
@@ -54,7 +54,7 @@ func NewUserDescription(s string) (UserDescription, error) {
 // NewInterest creates new Interest or returns an error if length is more than 64.
 func NewInterest(s string) (Interest, error) {
 	if len(s) > 64 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrInterestMustBeLessThan64CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrInterestLengthMustBeLessThan64)
 	}
 
 	return Interest(s), nil
@@ -63,7 +63,7 @@ func NewInterest(s string) (Interest, error) {
 // NewSocialLink creates new SocialLink or returns an error if length is more than 2048.
 func NewSocialLink(s string) (SocialLink, error) {
 	if len(s) > 2048 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrSocialLinkMustBeLessThan2048CharactersLength)
+		return "", fmt.Errorf("length is %d: %w", len(s), ErrSocialLinkLengthMustBeLessThan2048)
 	}
 
 	return SocialLink(s), nil

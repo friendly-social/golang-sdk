@@ -14,7 +14,7 @@ func TestGetFeedQueue(t *testing.T) {
 		mockStatus    int
 		mockResponse  string
 		expectedFeed  *FeedQueue
-		expectedError error
+		expectError   bool
 	}
 
 	cases := []testCase{
@@ -33,10 +33,10 @@ func TestGetFeedQueue(t *testing.T) {
 			},
 		},
 		{
-			name:          "API Error",
-			auth:          &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
-			mockStatus:    500,
-			expectedError: ErrInternalServerError,
+			name:        "API Error",
+			auth:        &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
+			mockStatus:  500,
+			expectError: true,
 		},
 	}
 
@@ -55,9 +55,8 @@ func TestGetFeedQueue(t *testing.T) {
 			client := NewClient("https://getfriend.ly")
 			feed, err := client.GetFeedQueue(tc.auth)
 
-			if tc.expectedError != nil {
+			if tc.expectError {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedFeed, feed)
