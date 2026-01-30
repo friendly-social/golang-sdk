@@ -1,6 +1,9 @@
 package sdk
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // FeedEntry represents single Entry from Feed.
 type FeedEntry struct {
@@ -16,9 +19,9 @@ type FeedQueue struct {
 }
 
 // GetFeedQueue returns FeedQueue structure for provided Authorization.
-func (c *Client) GetFeedQueue(auth *Authorization) (*FeedQueue, error) {
+func (c *Client) GetFeedQueue(ctx context.Context, auth *Authorization) (*FeedQueue, error) {
 	var feed FeedQueue
-	err := c.do("GET", "/feed/queue", auth, nil, &feed)
+	err := c.do(ctx, "GET", "/feed/queue", auth, nil, &feed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get feed queue: %w", err)
 	}

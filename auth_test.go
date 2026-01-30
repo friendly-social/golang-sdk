@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -90,7 +91,7 @@ func TestGenerate(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			auth, err := client.Generate(tc.input.nickname, tc.input.description, tc.input.interests, tc.input.avatar, tc.input.link)
+			auth, err := client.Generate(context.Background(), tc.input.nickname, tc.input.description, tc.input.interests, tc.input.avatar, tc.input.link)
 
 			if tc.expectError {
 				require.Error(t, err)

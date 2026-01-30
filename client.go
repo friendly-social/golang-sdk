@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,7 +44,7 @@ func NewProductionClient() *Client {
 }
 
 // do creates and executes HTTP request to given path using provided data and fills unmarshalled response to result argument or returns an error if something went wrong.
-func (c *Client) do(method, path string, auth *Authorization, body any, result any) error {
+func (c *Client) do(ctx context.Context, method, path string, auth *Authorization, body any, result any) error {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonData, err := json.Marshal(body)
@@ -59,7 +60,7 @@ func (c *Client) do(method, path string, auth *Authorization, body any, result a
 		return fmt.Errorf("invalid path: %s + %s", c.url, path)
 	}
 
-	req, err := http.NewRequest(method, completePath, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, method, completePath, bodyReader)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

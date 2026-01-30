@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -58,7 +59,7 @@ func NewUserAccessHash(s string) (UserAccessHash, error) {
 }
 
 // Generate makes request for creating account using provided data and returns Authorization structure.
-func (c *Client) Generate(nickname Nickname, description UserDescription, interests []Interest, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {
+func (c *Client) Generate(ctx context.Context, nickname Nickname, description UserDescription, interests []Interest, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {
 	req := generateRequest{
 		Nickname:    &nickname,
 		Description: &description,
@@ -68,7 +69,7 @@ func (c *Client) Generate(nickname Nickname, description UserDescription, intere
 	}
 
 	var resp generateResponse
-	err := c.do("POST", "/auth/generate", nil, req, &resp)
+	err := c.do(ctx, "POST", "/auth/generate", nil, req, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate account: %w", err)
 	}

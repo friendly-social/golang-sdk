@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -45,10 +46,15 @@ func (c *Client) GetFileURL(descriptor *FileDescriptor) string {
 }
 
 // UploadFile uploads file from disk to the server and returns corresponding descriptor.
-func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor, error) {
+func (c *Client) UploadFile(ctx context.Context, filename string, reader io.Reader) (*FileDescriptor, error) {
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
 	filename = path.Base(filename)
+
+	stop := context.AfterFunc(ctx, func() {
+		_ = pw.CloseWithError(ctx.Err())
+	})
+	defer stop()
 
 	go func() {
 		var err error
@@ -72,10 +78,11 @@ func (c *Client) UploadFile(filename string, reader io.Reader) (*FileDescriptor,
 		return nil, fmt.Errorf("invalid path: %s + %s", c.url, "/files/upload")
 	}
 
-	req, err := http.NewRequest("POST", completePath, pr)
+	req, err := http.NewRequestWithContext(ctx, "POST", completePath, pr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	var resp uploadFileResponse

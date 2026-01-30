@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -61,7 +62,7 @@ func TestGenerateFriendToken(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			token, err := client.GenerateFriendToken(tc.auth)
+			token, err := client.GenerateFriendToken(context.Background(), tc.auth)
 
 			if tc.expectError {
 				require.Error(t, err)
@@ -131,7 +132,7 @@ func TestAddFriend(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			err := client.AddFriend(tc.input.auth, tc.input.token, tc.input.id)
+			err := client.AddFriend(context.Background(), tc.input.auth, tc.input.token, tc.input.id)
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
@@ -153,11 +154,11 @@ func TestSendFriendRequest(t *testing.T) {
 	}
 
 	type testCase struct {
-		name          string
-		input         input
-		mockStatus    int
-		expectedBody  string
-		expectError   bool
+		name         string
+		input        input
+		mockStatus   int
+		expectedBody string
+		expectError  bool
 	}
 
 	cases := []testCase{
@@ -192,7 +193,7 @@ func TestSendFriendRequest(t *testing.T) {
 				Reply(tc.mockStatus)
 
 			client := NewClient("https://getfriend.ly")
-			err := client.SendFriendRequest(tc.input.auth, tc.input.id, tc.input.hash)
+			err := client.SendFriendRequest(context.Background(), tc.input.auth, tc.input.id, tc.input.hash)
 
 			if tc.expectError {
 				require.Error(t, err)
@@ -211,11 +212,11 @@ func TestDeclineFriendRequest(t *testing.T) {
 	}
 
 	type testCase struct {
-		name          string
-		input         input
-		mockStatus    int
-		expectedBody  string
-		expectError   bool
+		name         string
+		input        input
+		mockStatus   int
+		expectedBody string
+		expectError  bool
 	}
 
 	cases := []testCase{
@@ -250,7 +251,7 @@ func TestDeclineFriendRequest(t *testing.T) {
 				Reply(tc.mockStatus)
 
 			client := NewClient("https://getfriend.ly")
-			err := client.DeclineFriendRequest(tc.input.auth, tc.input.id, tc.input.hash)
+			err := client.DeclineFriendRequest(context.Background(), tc.input.auth, tc.input.id, tc.input.hash)
 
 			if tc.expectError {
 				require.Error(t, err)

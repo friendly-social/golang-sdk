@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -40,9 +41,9 @@ func NewFriendToken(s string) (FriendToken, error) {
 }
 
 // GenerateFriendToken creates token for Authorization's user by which another users can add them.
-func (c *Client) GenerateFriendToken(auth *Authorization) (FriendToken, error) {
+func (c *Client) GenerateFriendToken(ctx context.Context, auth *Authorization) (FriendToken, error) {
 	var resp generateFriendTokenResponse
-	err := c.do("POST", "/friends/generate", auth, nil, &resp)
+	err := c.do(ctx, "POST", "/friends/generate", auth, nil, &resp)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate friend token: %w", err)
 	}
@@ -51,14 +52,14 @@ func (c *Client) GenerateFriendToken(auth *Authorization) (FriendToken, error) {
 }
 
 // AddFriend makes request to add user with provided FriendToken and ID to Authorization's friends list.
-func (c *Client) AddFriend(auth *Authorization, token FriendToken, userId UserId) error {
+func (c *Client) AddFriend(ctx context.Context, auth *Authorization, token FriendToken, userId UserId) error {
 	req := addFriendRequest{
 		UserId: userId,
 		Token:  &token,
 	}
 
 	var resp addFriendResponse
-	err := c.do("POST", "/friends/add", auth, req, &resp)
+	err := c.do(ctx, "POST", "/friends/add", auth, req, &resp)
 	if err != nil {
 		return fmt.Errorf("failed to add friend: %w", err)
 	}
@@ -71,13 +72,13 @@ func (c *Client) AddFriend(auth *Authorization, token FriendToken, userId UserId
 }
 
 // SendFriendRequest sends friend request from Authorization to user with provided ID and AccessHash.
-func (c *Client) SendFriendRequest(auth *Authorization, userId UserId, accessHash UserAccessHash) error {
+func (c *Client) SendFriendRequest(ctx context.Context, auth *Authorization, userId UserId, accessHash UserAccessHash) error {
 	req := friendRequestRequest{
 		UserId:     userId,
 		AccessHash: &accessHash,
 	}
 
-	err := c.do("POST", "/friends/request", auth, req, nil)
+	err := c.do(ctx, "POST", "/friends/request", auth, req, nil)
 	if err != nil {
 		return fmt.Errorf("failed to send friend request: %w", err)
 	}
@@ -86,13 +87,13 @@ func (c *Client) SendFriendRequest(auth *Authorization, userId UserId, accessHas
 }
 
 // DeclineFriendRequest declines Authorization's request from user with provided ID and AccessHash.
-func (c *Client) DeclineFriendRequest(auth *Authorization, userId UserId, accessHash UserAccessHash) error {
+func (c *Client) DeclineFriendRequest(ctx context.Context, auth *Authorization, userId UserId, accessHash UserAccessHash) error {
 	req := friendRequestRequest{
 		UserId:     userId,
 		AccessHash: &accessHash,
 	}
 
-	err := c.do("POST", "/friends/decline", auth, req, nil)
+	err := c.do(ctx, "POST", "/friends/decline", auth, req, nil)
 	if err != nil {
 		return fmt.Errorf("failed to decline friend request: %w", err)
 	}

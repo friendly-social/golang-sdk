@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"testing"
 
 	"github.com/h2non/gock"
@@ -53,7 +54,7 @@ func TestGetFeedQueue(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			feed, err := client.GetFeedQueue(tc.auth)
+			feed, err := client.GetFeedQueue(context.Background(), tc.auth)
 
 			if tc.expectError {
 				require.Error(t, err)

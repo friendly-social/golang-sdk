@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -109,7 +110,7 @@ func TestGetSelfDetails(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			self, err := client.GetSelfDetails(tc.auth)
+			self, err := client.GetSelfDetails(context.Background(), tc.auth)
 
 			if tc.expectError {
 				require.Error(t, err)
@@ -186,7 +187,7 @@ func TestGetUserDetails(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			user, err := client.GetUserDetails(tc.input.auth, tc.input.id, tc.input.hash)
+			user, err := client.GetUserDetails(context.Background(), tc.input.auth, tc.input.id, tc.input.hash)
 
 			if tc.expectError {
 				require.Error(t, err)

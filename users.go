@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -70,9 +71,9 @@ func NewSocialLink(s string) (SocialLink, error) {
 }
 
 // GetSelfDetails returns UserDetails structure for provided Authorization data.
-func (c *Client) GetSelfDetails(auth *Authorization) (*UserDetails, error) {
+func (c *Client) GetSelfDetails(ctx context.Context, auth *Authorization) (*UserDetails, error) {
 	var details UserDetails
-	err := c.do("GET", "/users/details", auth, nil, &details)
+	err := c.do(ctx, "GET", "/users/details", auth, nil, &details)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get self details: %w", err)
 	}
@@ -81,9 +82,9 @@ func (c *Client) GetSelfDetails(auth *Authorization) (*UserDetails, error) {
 }
 
 // GetUserDetails returns UserDetails for provided user's ID and AccessHash from provided Authorization's perspective.
-func (c *Client) GetUserDetails(auth *Authorization, userId UserId, accessHash UserAccessHash) (*UserDetails, error) {
+func (c *Client) GetUserDetails(ctx context.Context, auth *Authorization, userId UserId, accessHash UserAccessHash) (*UserDetails, error) {
 	var details UserDetails
-	err := c.do("GET", fmt.Sprintf("/users/details/%d/%s", userId, accessHash), auth, nil, &details)
+	err := c.do(ctx, "GET", fmt.Sprintf("/users/details/%d/%s", userId, accessHash), auth, nil, &details)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user details: %w", err)
 	}

@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -150,7 +151,7 @@ func TestDoAndExecute(t *testing.T) {
 				method: "GET",
 				path:   "/ping",
 			},
-			mockStatus:    418,
+			mockStatus:  418,
 			expectError: true,
 		},
 		{
@@ -192,7 +193,7 @@ func TestDoAndExecute(t *testing.T) {
 
 			var resp response
 			client := NewClient(tc.input.host)
-			err := client.do(tc.input.method, tc.input.path, tc.input.auth, tc.input.body, &resp)
+			err := client.do(context.Background(), tc.input.method, tc.input.path, tc.input.auth, tc.input.body, &resp)
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
@@ -205,4 +206,21 @@ func TestDoAndExecute(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDoWithCancellation(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Get("/ping").
+		Reply(200).
+		Delay(100 * time.Hour)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	client := NewClient("https://getfriend.ly")
+	err := client.do(ctx, "GET", "/ping", nil, nil, nil)
+
+	require.ErrorIs(t, err, context.DeadlineExceeded)
 }

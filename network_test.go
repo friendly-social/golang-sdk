@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"testing"
 
 	"github.com/h2non/gock"
@@ -60,7 +61,7 @@ func TestGetNetworkDetails(t *testing.T) {
 				JSON(tc.mockResponse)
 
 			client := NewClient("https://getfriend.ly")
-			network, err := client.GetNetworkDetails(tc.auth)
+			network, err := client.GetNetworkDetails(context.Background(), tc.auth)
 
 			if tc.expectError {
 				require.Error(t, err)
