@@ -2,6 +2,8 @@ package sdk
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"strings"
 	"testing"
 
@@ -55,6 +57,30 @@ func TestGenerate_Success(t *testing.T) {
 	}, auth)
 }
 
+func TestExample(t *testing.T) {
+	defer gock.Off()
+	gock.New("https://api.getfriend.ly").
+		Post("/auth/generate").
+		Reply(200).
+		JSON(`{"id":1,"token":"token","accessHash":"hash"}`)
+
+	client := NewClient("https://api.getfriend.ly")
+	ctx := context.Background()
+
+	auth, err := client.Generate(ctx,
+		"atennop",
+		"the author of this gorgeous SDK",
+		[]Interest{"programming", "neovim", "learning"},
+		&FileDescriptor{Id: 1, AccessHash: "very-long-hash"},
+		"https://github.com/Atennop1")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Leaked Data:\nID: %d\nToken: %s\nAccessHash: %s\n", auth.Id, auth.Token, auth.AccessHash)
+}
+
 func TestGenerate_Failed(t *testing.T) {
 	defer gock.Off()
 
@@ -66,4 +92,3 @@ func TestGenerate_Failed(t *testing.T) {
 	_, err := client.Generate(context.Background(), "atennop", "bio", []Interest{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
 	require.Error(t, err)
 }
-

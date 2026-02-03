@@ -1,0 +1,49 @@
+name: SDK Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: [1.25]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build
+        run: go build ./...
+
+      - name: Run Tests
+        run: go test ./... -v -race -coverprofile=coverage.out
+
+      - name: Run Linters
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run
+
+      - name: Check formatting
+        run: gofmt -l .
+

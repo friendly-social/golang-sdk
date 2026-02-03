@@ -86,7 +86,7 @@ func (c *Client) SendFriendRequest(ctx context.Context, auth *Authorization, use
 	return nil
 }
 
-// DeclineFriendRequest declines Authorization's request from user with provided ID and AccessHash.
+// DeclineFriendRequest declines Authorization's request to user with provided ID and AccessHash.
 func (c *Client) DeclineFriendRequest(ctx context.Context, auth *Authorization, userId UserId, accessHash UserAccessHash) error {
 	req := friendRequestRequest{
 		UserId:     userId,

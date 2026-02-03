@@ -25,9 +25,9 @@ var (
 )
 
 // NewClient creates basic Client with provided URL (on which backend is located).
-func NewClient(endpoint string) *Client {
+func NewClient(url string) *Client {
 	return &Client{
-		url: endpoint,
+		url: url,
 		http: &http.Client{
 			Timeout: 30 * time.Second,
 		},
