@@ -8,10 +8,10 @@ import (
 // UserId represents the unique identifier of user.
 type UserId int64
 
-// UserAccessHash represents the unique hash associated with user. Works in pair with UserId.
+// UserAccessHash represents the unique hash associated with user. Works in trio with UserId and Token.
 type UserAccessHash string
 
-// Token represents access token for the user. Works in pair with UserId.
+// Token represents access token for the user. Works in trio with UserId and UserAccessHash.
 type Token string
 
 // Authorization is a helper structure for composing user's ID, AccessHash and Token for authorization.
@@ -69,7 +69,7 @@ func (c *Client) Generate(ctx context.Context, nickname Nickname, description Us
 	}
 
 	var resp generateResponse
-	err := c.do(ctx, "POST", "/auth/generate", nil, req, &resp)
+	err := c.do(ctx, nil, "POST", "/auth/generate", req, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate account: %w", err)
 	}

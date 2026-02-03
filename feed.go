@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// FeedEntry represents single Entry from Feed.
+// FeedEntry represents single entry from the Feed.
 type FeedEntry struct {
 	IsRequest         bool          `json:"isRequest"`
 	IsExtendedNetwork bool          `json:"isExtendedNetwork"`
@@ -21,7 +21,7 @@ type FeedQueue struct {
 // GetFeedQueue returns FeedQueue structure for provided Authorization.
 func (c *Client) GetFeedQueue(ctx context.Context, auth *Authorization) (*FeedQueue, error) {
 	var feed FeedQueue
-	err := c.do(ctx, "GET", "/feed/queue", auth, nil, &feed)
+	err := c.do(ctx, auth, "GET", "/feed/queue", nil, &feed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get feed queue: %w", err)
 	}

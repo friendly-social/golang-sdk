@@ -73,7 +73,7 @@ func NewSocialLink(s string) (SocialLink, error) {
 // GetSelfDetails returns UserDetails structure for provided Authorization data.
 func (c *Client) GetSelfDetails(ctx context.Context, auth *Authorization) (*UserDetails, error) {
 	var details UserDetails
-	err := c.do(ctx, "GET", "/users/details", auth, nil, &details)
+	err := c.do(ctx, auth, "GET", "/users/details", nil, &details)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get self details: %w", err)
 	}
@@ -84,7 +84,7 @@ func (c *Client) GetSelfDetails(ctx context.Context, auth *Authorization) (*User
 // GetUserDetails returns UserDetails for provided user's ID and AccessHash from provided Authorization's perspective.
 func (c *Client) GetUserDetails(ctx context.Context, auth *Authorization, userId UserId, accessHash UserAccessHash) (*UserDetails, error) {
 	var details UserDetails
-	err := c.do(ctx, "GET", fmt.Sprintf("/users/details/%d/%s", userId, accessHash), auth, nil, &details)
+	err := c.do(ctx, auth, "GET", fmt.Sprintf("/users/details/%d/%s", userId, accessHash), nil, &details)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user details: %w", err)
 	}

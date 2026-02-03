@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
 	"time"
@@ -38,13 +39,12 @@ func NewLocalhostClient(port int) *Client {
 	return NewClient(fmt.Sprintf("http://localhost:%d", port))
 }
 
-// NewProductionClient creates Client with Meetacy URL.
+// NewProductionClient creates Client with actual backend.
 func NewProductionClient() *Client {
 	return NewClient("https://api.getfriend.ly/")
 }
 
-// do creates and executes HTTP request to given path using provided data and fills unmarshalled response to result argument or returns an error if something went wrong.
-func (c *Client) do(ctx context.Context, method, path string, auth *Authorization, body any, result any) error {
+func (c *Client) do(ctx context.Context, auth *Authorization, method, path string, body any, result any) error {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonData, err := json.Marshal(body)
@@ -74,7 +74,6 @@ func (c *Client) do(ctx context.Context, method, path string, auth *Authorizatio
 	return c.execute(req, result)
 }
 
-// execute send already created request and fills unmarshalled response to result argument or error if something went wrong.
 func (c *Client) execute(req *http.Request, result any) error {
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -82,23 +81,44 @@ func (c *Client) execute(req *http.Request, result any) error {
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
+	ct := resp.Header.Get("Content-Type")
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		if result != nil {
-			if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
+		if result == nil {
+			return nil
+		}
+
+		mediaType, _, _ := mime.ParseMediaType(ct)
+		switch mediaType {
+		case "application/json":
+			if err = json.Unmarshal(body, result); err != nil {
 				return fmt.Errorf("failed to decode response: %w", err)
 			}
+		case "text/plain":
+			strPtr, ok := result.(*string)
+			if !ok {
+				return fmt.Errorf("expected *string result for text/plain response")
+			}
+			*strPtr = string(body)
+		default:
+			return fmt.Errorf("unexpected content type: %s", ct)
 		}
+
 		return nil
 	}
 
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrUnauthorized)
+		return fmt.Errorf("%s %s: %w\n%s", req.Method, req.URL.Path, ErrUnauthorized, body)
 	case http.StatusForbidden:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrForbidden)
+		return fmt.Errorf("%s %s: %w\n%s", req.Method, req.URL.Path, ErrForbidden, body)
 	case http.StatusNotFound:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrNotFound)
+		return fmt.Errorf("%s %s: %w\n%s", req.Method, req.URL.Path, ErrNotFound, body)
 	default:
-		return fmt.Errorf("%s %s: unexpected request with status code %d", req.Method, req.URL.Path, resp.StatusCode)
+		return fmt.Errorf("%s %s: unexpected request with status code %d\n%s", req.Method, req.URL.Path, resp.StatusCode, body)
 	}
 }

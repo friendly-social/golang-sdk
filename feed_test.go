@@ -8,60 +8,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetFeedQueue(t *testing.T) {
-	type testCase struct {
-		name          string
-		auth          *Authorization
-		mockStatus    int
-		mockResponse  string
-		expectedFeed  *FeedQueue
-		expectError   bool
-	}
+func TestGetFeedQueue_Success(t *testing.T) {
+	defer gock.Off()
 
-	cases := []testCase{
-		{
-			name:         "Success",
-			auth:         &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
-			mockStatus:   200,
-			mockResponse: `{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2},"isRequest":true}]}`,
-			expectedFeed: &FeedQueue{
-				Entries: []FeedEntry{{
-					IsRequest:         true,
-					IsExtendedNetwork: true,
-					CommonFriends:     []UserDetails{},
-					Details:           UserDetails{Id: 2},
-				}},
-			},
-		},
-		{
-			name:        "API Error",
-			auth:        &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")},
-			mockStatus:  500,
-			expectError: true,
-		},
-	}
+	gock.New("https://getfriend.ly").
+		Get("/feed/queue").
+		MatchHeader("Content-Type", "application/json").
+		MatchHeader("X-User-Id", "1").
+		MatchHeader("X-Token", "token").
+		Reply(200).
+		JSON(`{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2},"isRequest":true}]}`)
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			defer gock.Off()
+	client := NewClient("https://getfriend.ly")
+	feed, err := client.GetFeedQueue(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 
-			gock.New("https://getfriend.ly").
-				Get("/feed/queue").
-				MatchHeader("Content-Type", "application/json").
-				MatchHeader("X-User-Id", "1").
-				MatchHeader("X-Token", "token").
-				Reply(tc.mockStatus).
-				JSON(tc.mockResponse)
+	require.NoError(t, err)
+	require.Equal(t, &FeedQueue{
+		Entries: []FeedEntry{{
+			IsRequest:         true,
+			IsExtendedNetwork: true,
+			CommonFriends:     []UserDetails{},
+			Details:           UserDetails{Id: 2},
+		}},
+	}, feed)
+}
 
-			client := NewClient("https://getfriend.ly")
-			feed, err := client.GetFeedQueue(context.Background(), tc.auth)
+func TestGetFeedQueue_Failed(t *testing.T) {
+	defer gock.Off()
 
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedFeed, feed)
-			}
-		})
-	}
+	gock.New("https://getfriend.ly").
+		Get("/feed/queue").
+		Reply(400)
+
+	client := NewClient("https://getfriend.ly")
+	_, err := client.GetFeedQueue(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
+	require.Error(t, err)
 }

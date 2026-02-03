@@ -43,7 +43,7 @@ func NewFriendToken(s string) (FriendToken, error) {
 // GenerateFriendToken creates token for Authorization's user by which another users can add them.
 func (c *Client) GenerateFriendToken(ctx context.Context, auth *Authorization) (FriendToken, error) {
 	var resp generateFriendTokenResponse
-	err := c.do(ctx, "POST", "/friends/generate", auth, nil, &resp)
+	err := c.do(ctx, auth, "POST", "/friends/generate", nil, &resp)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate friend token: %w", err)
 	}
@@ -59,7 +59,7 @@ func (c *Client) AddFriend(ctx context.Context, auth *Authorization, token Frien
 	}
 
 	var resp addFriendResponse
-	err := c.do(ctx, "POST", "/friends/add", auth, req, &resp)
+	err := c.do(ctx, auth, "POST", "/friends/add", req, &resp)
 	if err != nil {
 		return fmt.Errorf("failed to add friend: %w", err)
 	}
@@ -78,7 +78,7 @@ func (c *Client) SendFriendRequest(ctx context.Context, auth *Authorization, use
 		AccessHash: &accessHash,
 	}
 
-	err := c.do(ctx, "POST", "/friends/request", auth, req, nil)
+	err := c.do(ctx, auth, "POST", "/friends/request", req, nil)
 	if err != nil {
 		return fmt.Errorf("failed to send friend request: %w", err)
 	}
@@ -93,7 +93,7 @@ func (c *Client) DeclineFriendRequest(ctx context.Context, auth *Authorization, 
 		AccessHash: &accessHash,
 	}
 
-	err := c.do(ctx, "POST", "/friends/decline", auth, req, nil)
+	err := c.do(ctx, auth, "POST", "/friends/decline", req, nil)
 	if err != nil {
 		return fmt.Errorf("failed to decline friend request: %w", err)
 	}

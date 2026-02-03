@@ -3,6 +3,7 @@ package sdk
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -15,200 +16,66 @@ func TestClients(t *testing.T) {
 	t.Run("Default Client", func(t *testing.T) {
 		client := NewClient("https://example.com")
 		require.Equal(t, client.url, "https://example.com")
-		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
+		require.Equal(t, client.http.Timeout, 30*time.Second)
 	})
 
 	t.Run("Localhost Client", func(t *testing.T) {
 		client := NewLocalhostClient(8080)
 		require.Equal(t, client.url, "http://localhost:8080")
-		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
+		require.Equal(t, client.http.Timeout, 30*time.Second)
 	})
 
 	t.Run("Production Client", func(t *testing.T) {
 		client := NewProductionClient()
 		require.Equal(t, client.url, "https://api.getfriend.ly/")
-		require.Equal(t, client.http, &http.Client{Timeout: 30 * time.Second})
+		require.Equal(t, client.http.Timeout, 30*time.Second)
 	})
 }
 
-func TestDoAndExecute(t *testing.T) {
-	type input struct {
-		host   string
-		path   string
-		method string
-		body   any
-		auth   *Authorization
+func TestDo_SuccessJSON(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Get("/ping").
+		MatchHeader("Content-Type", "application/json").
+		MatchHeader("X-User-Id", "1").
+		MatchHeader("X-Token", "token").
+		JSON(`{"Field": "something interesting"}`).
+		Reply(200).
+		JSON(`{"Trollge": "trollge"}`)
+
+	client := NewClient("https://getfriend.ly")
+	auth := &Authorization{
+		Id:         1,
+		Token:      Token("token"),
+		AccessHash: UserAccessHash("hash"),
 	}
 
-	type response struct {
-		Trollge string
-	}
+	var resp struct{ Trollge string }
+	err := client.do(context.Background(), auth, "GET", "/ping", struct{ Field string }{"something interesting"}, &resp)
 
-	type testCase struct {
-		name             string
-		input            input
-		mockStatus       int
-		mockResponse     string
-		mockError        error
-		expectedHeaders  map[string]string
-		expectedBody     string
-		expectedResponse response
-		expectError      bool
-		expectedError    error
-	}
-
-	cases := []testCase{
-		{
-			name: "Success",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-				body:   struct{ Field string }{"something interesting"},
-				auth: &Authorization{
-					Id:         1,
-					Token:      Token("token"),
-					AccessHash: UserAccessHash("hash"),
-				},
-			},
-			mockStatus:   200,
-			mockResponse: `{"Trollge":"trollge"}`,
-			expectedBody: `{"Field":"something interesting"}`,
-			expectedHeaders: map[string]string{
-				"Content-Type": "application/json",
-				"X-User-Id":    "1",
-				"X-Token":      "token",
-			},
-			expectedResponse: response{
-				Trollge: "trollge",
-			},
-		},
-		{
-			name: "Failed Marshal Body",
-			input: input{
-				body: func() {},
-			},
-			expectError: true,
-		},
-		{
-			name: "Invalid Path",
-			input: input{
-				host: "::invalid",
-			},
-			expectError: true,
-		},
-		{
-			name: "Invalid Request",
-			input: input{
-				method: "BAD METHOD",
-			},
-			expectError: true,
-		},
-		{
-			name: "Network Error",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-			},
-			mockError:   fmt.Errorf("some shit"),
-			expectError: true,
-		},
-		{
-			name: "Unauthorized",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-			},
-			mockStatus:    401,
-			expectedError: ErrUnauthorized,
-		},
-		{
-			name: "Forbidden",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-			},
-			mockStatus:    403,
-			expectedError: ErrForbidden,
-		},
-		{
-			name: "Not Found",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-			},
-			mockStatus:    404,
-			expectedError: ErrNotFound,
-		},
-		{
-			name: "Something went wrong",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-			},
-			mockStatus:  418,
-			expectError: true,
-		},
-		{
-			name: "Invalid response",
-			input: input{
-				host:   "https://getfriend.ly",
-				method: "GET",
-				path:   "/ping",
-			},
-			mockStatus:   200,
-			mockResponse: "invalid",
-			expectError:  true,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			defer gock.Off()
-
-			r := gock.New(tc.input.host)
-			switch tc.input.method {
-			case "GET":
-				r = r.Get(tc.input.path)
-			case "POST":
-				r = r.Post(tc.input.path)
-			}
-
-			for k, v := range tc.expectedHeaders {
-				r = r.MatchHeader(k, v)
-			}
-
-			r = r.JSON(tc.expectedBody)
-			if tc.mockError != nil {
-				r.ReplyError(tc.mockError)
-			} else {
-				r.Reply(tc.mockStatus).
-					JSON(tc.mockResponse)
-			}
-
-			var resp response
-			client := NewClient(tc.input.host)
-			err := client.do(context.Background(), tc.input.method, tc.input.path, tc.input.auth, tc.input.body, &resp)
-
-			if tc.expectedError != nil {
-				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
-			} else if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedResponse, resp)
-			}
-		})
-	}
+	require.NoError(t, err)
+	require.Equal(t, struct{ Trollge string }{"trollge"}, resp)
 }
 
-func TestDoWithCancellation(t *testing.T) {
+func TestDo_SuccessPlaintext(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Get("/ping").
+		Reply(200).
+		SetHeader("Content-Type", "text/plain").
+		BodyString("trollge")
+
+	var resp string
+	client := NewClient("https://getfriend.ly")
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
+
+	require.NoError(t, err)
+	require.Equal(t, "trollge", resp)
+}
+
+func TestDo_Cancel(t *testing.T) {
 	defer gock.Off()
 
 	gock.New("https://getfriend.ly").
@@ -220,7 +87,117 @@ func TestDoWithCancellation(t *testing.T) {
 	defer cancel()
 
 	client := NewClient("https://getfriend.ly")
-	err := client.do(ctx, "GET", "/ping", nil, nil, nil)
+	err := client.do(ctx, nil, "GET", "/ping", nil, nil)
 
 	require.ErrorIs(t, err, context.DeadlineExceeded)
+}
+
+func TestDo_FailedToMarshalBody(t *testing.T) {
+	client := NewClient("https://getfriend.ly")
+	err := client.do(context.Background(), nil, "GET", "/ping", func() {}, nil)
+	require.Error(t, err)
+}
+
+func TestDo_InvalidURL(t *testing.T) {
+	client := NewClient("::invalid")
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
+	require.Error(t, err)
+}
+
+func TestDo_InvalidRequest(t *testing.T) {
+	client := NewClient("https://getfriend.ly")
+	err := client.do(context.Background(), nil, "SOMETHING BAD!!!", "/ping", nil, nil)
+	require.Error(t, err)
+}
+
+func TestDo_StatusCodes(t *testing.T) {
+	cases := []struct {
+		code    int
+		wantErr error
+	}{
+		{401, ErrUnauthorized},
+		{403, ErrForbidden},
+		{404, ErrNotFound},
+		{418, nil},
+	}
+
+	for _, tc := range cases {
+		defer gock.Off()
+		gock.New("https://getfriend.ly").
+			Get("/ping").
+			Reply(tc.code)
+
+		client := NewClient("https://getfriend.ly")
+		err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
+
+		require.Error(t, err)
+		if tc.wantErr != nil {
+			require.ErrorIs(t, err, tc.wantErr)
+		}
+	}
+}
+
+func TestDo_InvalidResponseJSON(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Get("/ping").
+		Reply(200).
+		SetHeader("Content-Type", "application/json").
+		BodyString("bad")
+
+	var resp any
+	client := NewClient("https://getfriend.ly")
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
+	require.Error(t, err)
+}
+
+func TestDo_InvalidResponsePlaintext(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Get("/ping").
+		Reply(200).
+		SetHeader("Content-Type", "text/plain").
+		BodyString("bad")
+
+	client := NewClient("https://getfriend.ly")
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, "bad")
+	require.Error(t, err)
+}
+
+func TestDo_InvalidContentType(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Get("/ping").
+		Reply(200).
+		SetHeader("Content-Type", "bad")
+
+	client := NewClient("https://getfriend.ly")
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, "bad")
+	require.Error(t, err)
+}
+
+type badReader struct{}
+
+func (e *badReader) Read([]byte) (int, error) {
+	return 0, fmt.Errorf("boom")
+}
+
+type badRoundTripper struct{}
+
+func (badRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: 400,
+		Body:       io.NopCloser(&badReader{}),
+	}, nil
+}
+
+func TestDo_FailedToReadBody(t *testing.T) {
+	client := NewClient("https://getfriend.ly")
+	client.http.Transport = badRoundTripper{}
+
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
+	require.Error(t, err)
 }

@@ -10,7 +10,7 @@ type NetworkDetails struct {
 // GetNetworkDetails returns NetworkDetails structure for provided Authorization.
 func (c *Client) GetNetworkDetails(ctx context.Context, auth *Authorization) (*NetworkDetails, error) {
 	var network NetworkDetails
-	err := c.do(ctx, "GET", "/network/details", auth, nil, &network)
+	err := c.do(ctx, auth, "GET", "/network/details", nil, &network)
 	if err != nil {
 		return nil, err
 	}

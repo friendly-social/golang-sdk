@@ -35,70 +35,35 @@ func TestAuthValueTypes(t *testing.T) {
 	})
 }
 
-func TestGenerate(t *testing.T) {
-	type input struct {
-		nickname    Nickname
-		description UserDescription
-		interests   []Interest
-		avatar      *FileDescriptor
-		link        SocialLink
-	}
+func TestGenerate_Success(t *testing.T) {
+	defer gock.Off()
 
-	type testCase struct {
-		name          string
-		input         input
-		mockStatus    int
-		mockResponse  string
-		expectedBody  string
-		expectedAuth  *Authorization
-		expectError   bool
-	}
+	gock.New("https://getfriend.ly").
+		Post("/auth/generate").
+		JSON(`{"nickname":"atennop", "description":"bio","interests":["programming"],"avatar":{"id":10,"accessHash":"hash"},"socialLink":"https://github.com/Atennop1"}`).
+		Reply(200).
+		JSON(`{"id":1,"token":"token","accessHash":"hash"}`)
 
-	cases := []testCase{
-		{
-			name: "Success",
-			input: input{
-				nickname:    Nickname("atennop"),
-				description: UserDescription("bio"),
-				interests:   []Interest{Interest("programming")},
-				avatar:      &FileDescriptor{Id: 10, AccessHash: FileAccessHash("hash")},
-				link:        SocialLink("https://github.com/Atennop1"),
-			},
-			mockStatus:   200,
-			mockResponse: `{"id":1,"token":"token","accessHash":"hash"}`,
-			expectedBody: `{"nickname":"atennop", "description":"bio","interests":["programming"],"avatar":{"id":10,"accessHash":"hash"},"socialLink":"https://github.com/Atennop1"}`,
-			expectedAuth: &Authorization{
-				Id:         1,
-				Token:      Token("token"),
-				AccessHash: UserAccessHash("hash"),
-			},
-		},
-		{
-			name:        "API Error",
-			mockStatus:  400,
-			expectError: true,
-		},
-	}
+	client := NewClient("https://getfriend.ly")
+	auth, err := client.Generate(context.Background(), "atennop", "bio", []Interest{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			defer gock.Off()
-
-			gock.New("https://getfriend.ly").
-				Post("/auth/generate").
-				JSON(tc.expectedBody).
-				Reply(tc.mockStatus).
-				JSON(tc.mockResponse)
-
-			client := NewClient("https://getfriend.ly")
-			auth, err := client.Generate(context.Background(), tc.input.nickname, tc.input.description, tc.input.interests, tc.input.avatar, tc.input.link)
-
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedAuth, auth)
-			}
-		})
-	}
+	require.NoError(t, err)
+	require.Equal(t, &Authorization{
+		Id:         1,
+		Token:      Token("token"),
+		AccessHash: UserAccessHash("hash"),
+	}, auth)
 }
+
+func TestGenerate_Failed(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Post("/auth/generate").
+		Reply(400)
+
+	client := NewClient("https://getfriend.ly")
+	_, err := client.Generate(context.Background(), "atennop", "bio", []Interest{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
+	require.Error(t, err)
+}
+
