@@ -156,4 +156,3 @@ func TestDeclineFriendRequest_Failed(t *testing.T) {
 	err := client.DeclineFriendRequest(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, "hash2")
 	require.Error(t, err)
 }
-

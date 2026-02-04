@@ -51,4 +51,3 @@ func TestGetNetworkDetails_Failed(t *testing.T) {
 	_, err := client.GetNetworkDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 	require.Error(t, err)
 }
-

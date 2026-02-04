@@ -27,7 +27,7 @@ type addFriendResponse struct {
 }
 
 var (
-	ErrFriendTokenLengthMustBe256 = fmt.Errorf("friend token must be 256 characters lenght")
+	ErrFriendTokenLengthMustBe256 = fmt.Errorf("friend token must be 256 characters length")
 	ErrFriendTokenExpired         = fmt.Errorf("friend token expired")
 )
 

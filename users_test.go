@@ -142,4 +142,3 @@ func TestGetUserDetails_Failed(t *testing.T) {
 	_, err := client.GetUserDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, UserAccessHash("hash2"))
 	require.Error(t, err)
 }
-

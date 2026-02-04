@@ -28,10 +28,10 @@ type UserDetails struct {
 }
 
 var (
-	ErrNicknameLengthMustBeLessThan256         = fmt.Errorf("nickname must be less than 256 characters lenght")
-	ErrUserDescriptionLengthMustBeLessThan1024 = fmt.Errorf("user description must be less than 1024 characters lenght")
-	ErrInterestLengthMustBeLessThan64          = fmt.Errorf("interest must be less than 64 characters lenght")
-	ErrSocialLinkLengthMustBeLessThan2048      = fmt.Errorf("social link must be less than 2048 characters lenght")
+	ErrNicknameLengthMustBeLessThan256         = fmt.Errorf("nickname must be less than 256 characters length")
+	ErrUserDescriptionLengthMustBeLessThan1024 = fmt.Errorf("user description must be less than 1024 characters lengt")
+	ErrInterestLengthMustBeLessThan64          = fmt.Errorf("interest must be less than 64 characters length")
+	ErrSocialLinkLengthMustBeLessThan2048      = fmt.Errorf("social link must be less than 2048 characters length")
 )
 
 // NewNickname creates new Nickname or returns an error if length is more than 256.

@@ -34,7 +34,7 @@ $(OUT_DIR):
 # formatting source code
 $(OUT_DIR)/fmt.cache: $(SRC) | $(OUT_DIR)
 	@echo ">> Formatting..."
-	@go fmt ./...
+	@gofmt -s -w .
 	@echo ">> Formatted."
 	@touch $@
 
