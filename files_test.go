@@ -80,38 +80,6 @@ func TestUploadFile_Success(t *testing.T) {
 	require.Equal(t, &FileDescriptor{Id: 123, AccessHash: "hash"}, fd)
 }
 
-func TestUploadFile_NoAccessToCloudflare(t *testing.T) {
-	defer gock.Off()
-
-	gock.New("https://getfriend.ly").
-		Post("/files/upload").
-		Reply(400).
-		BodyString("No access to lava lamps")
-
-	client := NewClient("https://getfriend.ly")
-	file := strings.NewReader("hello world")
-
-	_, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
-	require.Error(t, err)
-	require.ErrorIs(t, err, ErrNoAccessToCloudflare)
-}
-
-func TestUploadFile_InsufficientStorage(t *testing.T) {
-	defer gock.Off()
-
-	gock.New("https://getfriend.ly").
-		Post("/files/upload").
-		Reply(400).
-		BodyString("Insufficient Storage")
-
-	client := NewClient("https://getfriend.ly")
-	file := strings.NewReader("hello world")
-
-	_, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
-	require.Error(t, err)
-	require.ErrorIs(t, err, ErrInsufficientStorage)
-}
-
 func TestUploadFile_Canceled(t *testing.T) {
 	defer gock.Off()
 
@@ -213,13 +181,12 @@ func TestDownloadFile_Cancel(t *testing.T) {
 
 func TestDownloadFile_StatusCodes(t *testing.T) {
 	cases := []struct {
+		name    string
 		code    int
 		wantErr error
 	}{
-		{401, ErrUnauthorized},
-		{403, ErrForbidden},
-		{404, ErrNotFound},
-		{418, nil},
+		{"Not Found", 404, ErrNotFound},
+		{"I'm a teapot", 418, nil},
 	}
 
 	for _, tc := range cases {
@@ -237,21 +204,6 @@ func TestDownloadFile_StatusCodes(t *testing.T) {
 			require.ErrorIs(t, err, tc.wantErr)
 		}
 	}
-}
-
-func TestDownloadFile_FailedToReadBody(t *testing.T) {
-	defer gock.Off()
-
-	gock.New("https://getfriend.ly").
-		Get("/files/download/123/hash").
-		Reply(418)
-
-	client := NewClient("https://getfriend.ly")
-	client.http.Transport = badRoundTripper{}
-
-	fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
-	_, err := client.DownloadFile(context.Background(), fd)
-	require.Error(t, err)
 }
 
 func TestDownloadFile_CreateRequestFailed(t *testing.T) {

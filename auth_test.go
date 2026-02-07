@@ -35,7 +35,7 @@ func TestAuthValueTypes(t *testing.T) {
 	})
 }
 
-func TestGenerate_Success(t *testing.T) {
+func TestRegister_Success(t *testing.T) {
 	defer gock.Off()
 
 	gock.New("https://getfriend.ly").
@@ -45,7 +45,7 @@ func TestGenerate_Success(t *testing.T) {
 		JSON(`{"id":1,"token":"token","accessHash":"hash"}`)
 
 	client := NewClient("https://getfriend.ly")
-	auth, err := client.Generate(context.Background(), "atennop", "bio", []Interest{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
+	auth, err := client.Register(context.Background(), "atennop", "bio", Interests{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
 
 	require.NoError(t, err)
 	require.Equal(t, &Authorization{
@@ -55,7 +55,7 @@ func TestGenerate_Success(t *testing.T) {
 	}, auth)
 }
 
-func TestGenerate_Failed(t *testing.T) {
+func TestRegister_Failed(t *testing.T) {
 	defer gock.Off()
 
 	gock.New("https://getfriend.ly").
@@ -63,6 +63,6 @@ func TestGenerate_Failed(t *testing.T) {
 		Reply(400)
 
 	client := NewClient("https://getfriend.ly")
-	_, err := client.Generate(context.Background(), "atennop", "bio", []Interest{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
+	_, err := client.Register(context.Background(), "atennop", "bio", Interests{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
 	require.Error(t, err)
 }

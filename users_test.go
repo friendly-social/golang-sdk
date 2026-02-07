@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -46,6 +47,18 @@ func TestUsersValueTypes(t *testing.T) {
 		require.ErrorIs(t, err, ErrInterestLengthMustBeLessThan64)
 	})
 
+	t.Run("Valid Interests", func(t *testing.T) {
+		interests, err := NewInterests(Interest("vim"))
+		require.EqualValues(t, Interests{"vim"}, interests)
+		require.NoError(t, err)
+	})
+
+	t.Run("Invalid Interests", func(t *testing.T) {
+		_, err := NewInterests(slices.Repeat([]Interest{Interest("vim")}, 1000)...)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrTooMuchInterests)
+	})
+
 	t.Run("Valid SocialLink", func(t *testing.T) {
 		link, err := NewSocialLink("https://github.com/Atennop1")
 		require.EqualValues(t, SocialLink("https://github.com/Atennop1"), link)
@@ -79,7 +92,7 @@ func TestGetSelfDetails_Success(t *testing.T) {
 		AccessHash:  UserAccessHash("hash"),
 		Nickname:    Nickname("atennop"),
 		Description: UserDescription("something"),
-		Interests: []Interest{
+		Interests: Interests{
 			Interest("vim"),
 		},
 		Avatar: &FileDescriptor{
@@ -121,7 +134,7 @@ func TestGetUserDetails_Success(t *testing.T) {
 		AccessHash:  UserAccessHash("hash2"),
 		Nickname:    Nickname("tr3ble"),
 		Description: UserDescription("something2"),
-		Interests: []Interest{
+		Interests: Interests{
 			Interest("mac"),
 		},
 		Avatar: &FileDescriptor{
@@ -140,5 +153,117 @@ func TestGetUserDetails_Failed(t *testing.T) {
 
 	client := NewClient("https://getfriend.ly")
 	_, err := client.GetUserDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, UserAccessHash("hash2"))
+	require.Error(t, err)
+}
+
+func TestOptions(t *testing.T) {
+	cases := []struct {
+		name         string
+		option       editAccountOption
+		expectedBody string
+	}{
+		{
+			name:         "Valid Nickname Option",
+			option:       WithUserNickname("atennop"),
+			expectedBody: `{"nickname":{"value":"atennop"}}`,
+		},
+		{
+			name:         "Invalid Nickname Option",
+			option:       WithUserNickname(""),
+			expectedBody: `{}`,
+		},
+		{
+			name:         "Valid Description Option",
+			option:       WithUserDescription("bio"),
+			expectedBody: `{"description":{"value":"bio"}}`,
+		},
+		{
+			name:         "Invalid Description Option",
+			option:       WithUserDescription(""),
+			expectedBody: `{}`,
+		},
+		{
+			name:         "Valid Interests Option",
+			option:       WithUserInterests(Interests{"neovim", "coding"}),
+			expectedBody: `{"interests":{"value":["neovim", "coding"]}}`,
+		},
+		{
+			name:         "Invalid Interests Option",
+			option:       WithUserInterests(nil),
+			expectedBody: `{}`,
+		},
+		{
+			name:         "Valid Avatar Option",
+			option:       WithUserAvatar(&FileDescriptor{Id: 10, AccessHash: "hash"}),
+			expectedBody: `{"avatar":{"value":{"id":10, "accessHash":"hash"}}}`,
+		},
+		{
+			name:         "Invalid Avatar Option",
+			option:       WithUserAvatar(nil),
+			expectedBody: `{}`,
+		},
+		{
+			name:         "Valid SocialLink Option",
+			option:       WithUserSocialLink("https://example.com"),
+			expectedBody: `{"socialLink":{"value":"https://example.com"}}`,
+		},
+		{
+			name:         "Invalid SocialLink Option",
+			option:       WithUserSocialLink(""),
+			expectedBody: `{}`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer gock.Off()
+
+			gock.New("https://api.getfriend.ly").
+				JSON(tc.expectedBody).
+				Reply(200)
+
+			c := NewClient("https://api.getfriend.ly")
+			err := c.EditAccount(context.Background(), tc.option)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestEditAccount_Empty(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.getfriend.ly").
+		Patch("/users/edit").
+		Reply(200)
+
+	c := NewClient("https://api.getfriend.ly")
+	err := c.EditAccount(context.Background())
+
+	require.NoError(t, err)
+	require.False(t, gock.IsDone())
+}
+
+func TestEditAccount_Success(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.getfriend.ly").
+		Patch("/users/edit").
+		JSON(`{"nickname":{"value":"atennop"},"description":{"value":"bio"}}`).
+		Reply(200)
+
+	c := NewClient("https://api.getfriend.ly")
+	err := c.EditAccount(context.Background(), WithUserNickname("atennop"), WithUserDescription("bio"))
+	require.NoError(t, err)
+}
+
+func TestEditAccount_Failed(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.getfriend.ly").
+		JSON(`{"nickname":{"value":"atennop"},"description":{"value":"bio"}}`).
+		Reply(400)
+
+	c := NewClient("https://api.getfriend.ly")
+	err := c.EditAccount(context.Background(), WithUserNickname("atennop"), WithUserDescription("bio"))
 	require.Error(t, err)
 }

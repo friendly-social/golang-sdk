@@ -2,9 +2,6 @@ package sdk
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"net/http"
 	"testing"
 	"time"
 
@@ -32,7 +29,7 @@ func TestClients(t *testing.T) {
 	})
 }
 
-func TestDo_SuccessJSON(t *testing.T) {
+func TestDo_Success(t *testing.T) {
 	defer gock.Off()
 
 	gock.New("https://getfriend.ly").
@@ -56,23 +53,6 @@ func TestDo_SuccessJSON(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, struct{ Trollge string }{"trollge"}, resp)
-}
-
-func TestDo_SuccessPlaintext(t *testing.T) {
-	defer gock.Off()
-
-	gock.New("https://getfriend.ly").
-		Get("/ping").
-		Reply(200).
-		SetHeader("Content-Type", "text/plain").
-		BodyString("trollge")
-
-	var resp string
-	client := NewClient("https://getfriend.ly")
-	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
-
-	require.NoError(t, err)
-	require.Equal(t, "trollge", resp)
 }
 
 func TestDo_Cancel(t *testing.T) {
@@ -112,32 +92,35 @@ func TestDo_InvalidRequest(t *testing.T) {
 
 func TestDo_StatusCodes(t *testing.T) {
 	cases := []struct {
+		name    string
 		code    int
 		wantErr error
 	}{
-		{401, ErrUnauthorized},
-		{403, ErrForbidden},
-		{404, ErrNotFound},
-		{418, nil},
+		{"Unauthorized", 401, ErrUnauthorized},
+		{"Forbidden", 403, ErrForbidden},
+		{"Not Found", 404, ErrNotFound},
+		{"I'm a teapot", 418, nil},
 	}
 
 	for _, tc := range cases {
-		defer gock.Off()
-		gock.New("https://getfriend.ly").
-			Get("/ping").
-			Reply(tc.code)
+		t.Run(tc.name, func(t *testing.T) {
+			defer gock.Off()
+			gock.New("https://getfriend.ly").
+				Get("/ping").
+				Reply(tc.code)
 
-		client := NewClient("https://getfriend.ly")
-		err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
+			client := NewClient("https://getfriend.ly")
+			err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 
-		require.Error(t, err)
-		if tc.wantErr != nil {
-			require.ErrorIs(t, err, tc.wantErr)
-		}
+			require.Error(t, err)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+			}
+		})
 	}
 }
 
-func TestDo_InvalidResponseJSON(t *testing.T) {
+func TestDo_InvalidResponse(t *testing.T) {
 	defer gock.Off()
 
 	gock.New("https://getfriend.ly").
@@ -149,55 +132,5 @@ func TestDo_InvalidResponseJSON(t *testing.T) {
 	var resp any
 	client := NewClient("https://getfriend.ly")
 	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
-	require.Error(t, err)
-}
-
-func TestDo_InvalidResponsePlaintext(t *testing.T) {
-	defer gock.Off()
-
-	gock.New("https://getfriend.ly").
-		Get("/ping").
-		Reply(200).
-		SetHeader("Content-Type", "text/plain").
-		BodyString("bad")
-
-	client := NewClient("https://getfriend.ly")
-	err := client.do(context.Background(), nil, "GET", "/ping", nil, "bad")
-	require.Error(t, err)
-}
-
-func TestDo_InvalidContentType(t *testing.T) {
-	defer gock.Off()
-
-	gock.New("https://getfriend.ly").
-		Get("/ping").
-		Reply(200).
-		SetHeader("Content-Type", "bad")
-
-	client := NewClient("https://getfriend.ly")
-	err := client.do(context.Background(), nil, "GET", "/ping", nil, "bad")
-	require.Error(t, err)
-}
-
-type badReader struct{}
-
-func (e *badReader) Read([]byte) (int, error) {
-	return 0, fmt.Errorf("boom")
-}
-
-type badRoundTripper struct{}
-
-func (badRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
-	return &http.Response{
-		StatusCode: 400,
-		Body:       io.NopCloser(&badReader{}),
-	}, nil
-}
-
-func TestDo_FailedToReadBody(t *testing.T) {
-	client := NewClient("https://getfriend.ly")
-	client.http.Transport = badRoundTripper{}
-
-	err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 	require.Error(t, err)
 }

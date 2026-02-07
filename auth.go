@@ -21,15 +21,15 @@ type Authorization struct {
 	Token      Token          `json:"token"`
 }
 
-type generateRequest struct {
+type registerRequest struct {
 	Nickname    *Nickname        `json:"nickname"`
 	Description *UserDescription `json:"description"`
-	Interests   []Interest       `json:"interests"`
+	Interests   *Interests       `json:"interests"`
 	Avatar      *FileDescriptor  `json:"avatar"`
 	SocialLink  *SocialLink      `json:"socialLink"`
 }
 
-type generateResponse struct {
+type registerResponse struct {
 	Id         UserId         `json:"id"`
 	AccessHash UserAccessHash `json:"accessHash"`
 	Token      Token          `json:"token"`
@@ -58,20 +58,20 @@ func NewUserAccessHash(s string) (UserAccessHash, error) {
 	return UserAccessHash(s), nil
 }
 
-// Generate makes request for creating account using provided data and returns Authorization structure.
-func (c *Client) Generate(ctx context.Context, nickname Nickname, description UserDescription, interests []Interest, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {
-	req := generateRequest{
+// Register makes request for creating account using provided data and returns Authorization structure.
+func (c *Client) Register(ctx context.Context, nickname Nickname, description UserDescription, interests Interests, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {
+	req := registerRequest{
 		Nickname:    &nickname,
 		Description: &description,
-		Interests:   interests,
+		Interests:   &interests,
 		Avatar:      avatar,
 		SocialLink:  &link,
 	}
 
-	var resp generateResponse
+	var resp registerResponse
 	err := c.do(ctx, nil, "POST", "/auth/generate", req, &resp)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate account: %w", err)
+		return nil, fmt.Errorf("failed to create account: %w", err)
 	}
 
 	return &Authorization{

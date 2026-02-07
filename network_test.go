@@ -29,7 +29,7 @@ func TestGetNetworkDetails_Success(t *testing.T) {
 			AccessHash:  UserAccessHash("hash2"),
 			Nickname:    Nickname("tr3ble"),
 			Description: UserDescription("something2"),
-			Interests: []Interest{
+			Interests: Interests{
 				Interest("mac"),
 			},
 			Avatar: &FileDescriptor{

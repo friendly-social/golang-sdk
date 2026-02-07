@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"net/url"
 	"time"
@@ -81,31 +80,13 @@ func (c *Client) execute(req *http.Request, result any) error {
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
-	ct := resp.Header.Get("Content-Type")
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
-
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if result == nil {
 			return nil
 		}
 
-		mediaType, _, _ := mime.ParseMediaType(ct)
-		switch mediaType {
-		case "application/json":
-			if err = json.Unmarshal(body, result); err != nil {
-				return fmt.Errorf("failed to decode response: %w", err)
-			}
-		case "text/plain":
-			strPtr, ok := result.(*string)
-			if !ok {
-				return fmt.Errorf("expected *string result for text/plain response")
-			}
-			*strPtr = string(body)
-		default:
-			return fmt.Errorf("unexpected content type: %s", ct)
+		if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
 		}
 
 		return nil
@@ -113,12 +94,12 @@ func (c *Client) execute(req *http.Request, result any) error {
 
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		return fmt.Errorf("%s %s: %w\n%s", req.Method, req.URL.Path, ErrUnauthorized, body)
+		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrUnauthorized)
 	case http.StatusForbidden:
-		return fmt.Errorf("%s %s: %w\n%s", req.Method, req.URL.Path, ErrForbidden, body)
+		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrForbidden)
 	case http.StatusNotFound:
-		return fmt.Errorf("%s %s: %w\n%s", req.Method, req.URL.Path, ErrNotFound, body)
+		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrNotFound)
 	default:
-		return fmt.Errorf("%s %s: unexpected request with status code %d\n%s", req.Method, req.URL.Path, resp.StatusCode, body)
+		return fmt.Errorf("%s %s: unexpected request with status code %d", req.Method, req.URL.Path, resp.StatusCode)
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 )
 
 // FileId represents the unique identifier of any file.
@@ -30,8 +29,6 @@ type uploadFileResponse struct {
 
 var (
 	ErrFileAccessHashLengthMustBe256 = fmt.Errorf("file access hash must be 256 characters length")
-	ErrNoAccessToCloudflare          = fmt.Errorf("no access to Cloudflare")
-	ErrInsufficientStorage           = fmt.Errorf("not enough storage for file")
 )
 
 // NewFileAccessHash creates new FileAccessHash or returns an error if hash length isn't 256.
@@ -74,20 +71,11 @@ func (c *Client) DownloadFile(ctx context.Context, fd *FileDescriptor) (io.ReadC
 		return resp.Body, nil
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
 	switch resp.StatusCode {
-	case http.StatusUnauthorized:
-		return nil, fmt.Errorf("failed to download file: %w\n%s", ErrUnauthorized, body)
-	case http.StatusForbidden:
-		return nil, fmt.Errorf("failed to download file: %w\n%s", ErrForbidden, body)
 	case http.StatusNotFound:
-		return nil, fmt.Errorf("failed to download file: %w\n%s", ErrNotFound, body)
+		return nil, fmt.Errorf("failed to download file: %w", ErrNotFound)
 	default:
-		return nil, fmt.Errorf("failed to download file: unexpected status code %d\n%s", resp.StatusCode, body)
+		return nil, fmt.Errorf("failed to download file: unexpected status code %d", resp.StatusCode)
 	}
 }
 
@@ -129,15 +117,7 @@ func (c *Client) UploadFile(ctx context.Context, ip string, filename string, rea
 	var resp uploadFileResponse
 	err = c.execute(req, &resp)
 	if err != nil {
-		if strings.Contains(err.Error(), "No access to lava lamps") {
-			return nil, fmt.Errorf("%w: %w", ErrNoAccessToCloudflare, err)
-		}
-
-		if strings.Contains(err.Error(), "Insufficient Storage") {
-			return nil, fmt.Errorf("%w: %w", ErrInsufficientStorage, err)
-		}
-
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 
 	return &FileDescriptor{

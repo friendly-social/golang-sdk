@@ -18,21 +18,21 @@ import (
 )
 
 func main() {
-    client := sdk.NewClient("https://api.getfriend.ly")
-    ctx := context.Background()
-    
-    auth, err := client.Generate(ctx,
-    	"atennop",
-    	"the author of this SDK",
-    	[]Interest{"programming", "learning", "neovim", "debian"},
-    	&FileDescriptor{Id: 1, AccessHash: "very-long-hash"},
-    	"https://github.com/Atennop1")
-    
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    fmt.Printf("Leaked Data:\nID: %d\nToken: %s\nAccessHash: %s\n", auth.Id, auth.Token, auth.AccessHash)
+	client := sdk.NewClient("https://api.getfriend.ly")
+	ctx := context.Background()
+
+	auth, err := client.Register(ctx,
+		"atennop",
+		"the author of this SDK",
+		Interests{"programming", "learning", "neovim", "debian"},
+		&FileDescriptor{Id: 1, AccessHash: "very-long-hash"},
+		"https://github.com/Atennop1")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Leaked Data:\nID: %d\nToken: %s\nAccessHash: %s\n", auth.Id, auth.Token, auth.AccessHash)
 }
 ```
 
