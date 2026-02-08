@@ -20,7 +20,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid Nickname", func(t *testing.T) {
 		_, err := NewNickname(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrNicknameLengthMustBeLessThan256)
+		require.ErrorIs(t, err, ErrTooLongNickname)
 	})
 
 	t.Run("Valid Description", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid Description", func(t *testing.T) {
 		_, err := NewUserDescription(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrUserDescriptionLengthMustBeLessThan1024)
+		require.ErrorIs(t, err, ErrToLongUserDescription)
 	})
 
 	t.Run("Valid Interest", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid Interest", func(t *testing.T) {
 		_, err := NewInterest(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrInterestLengthMustBeLessThan64)
+		require.ErrorIs(t, err, ErrTooLongInterest)
 	})
 
 	t.Run("Valid Interests", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestUsersValueTypes(t *testing.T) {
 	t.Run("Invalid SocialLink", func(t *testing.T) {
 		_, err := NewSocialLink(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrSocialLinkLengthMustBeLessThan2048)
+		require.ErrorIs(t, err, ErrTooLongSocialLink)
 	})
 }
 
@@ -223,7 +223,7 @@ func TestOptions(t *testing.T) {
 				Reply(200)
 
 			c := NewClient("https://api.getfriend.ly")
-			err := c.EditAccount(context.Background(), tc.option)
+			err := c.EditAccount(context.Background(), &Authorization{Id: 1, Token: Token("token")}, tc.option)
 			require.NoError(t, err)
 		})
 	}
@@ -237,7 +237,7 @@ func TestEditAccount_Empty(t *testing.T) {
 		Reply(200)
 
 	c := NewClient("https://api.getfriend.ly")
-	err := c.EditAccount(context.Background())
+	err := c.EditAccount(context.Background(), &Authorization{Id: 1, Token: Token("token")})
 
 	require.NoError(t, err)
 	require.False(t, gock.IsDone())
@@ -248,11 +248,14 @@ func TestEditAccount_Success(t *testing.T) {
 
 	gock.New("https://api.getfriend.ly").
 		Patch("/users/edit").
+		MatchHeader("Content-Type", "application/json").
+		MatchHeader("X-User-Id", "1").
+		MatchHeader("X-Token", "token").
 		JSON(`{"nickname":{"value":"atennop"},"description":{"value":"bio"}}`).
 		Reply(200)
 
 	c := NewClient("https://api.getfriend.ly")
-	err := c.EditAccount(context.Background(), WithUserNickname("atennop"), WithUserDescription("bio"))
+	err := c.EditAccount(context.Background(), &Authorization{Id: 1, Token: Token("token")}, WithUserNickname("atennop"), WithUserDescription("bio"))
 	require.NoError(t, err)
 }
 
@@ -260,10 +263,10 @@ func TestEditAccount_Failed(t *testing.T) {
 	defer gock.Off()
 
 	gock.New("https://api.getfriend.ly").
-		JSON(`{"nickname":{"value":"atennop"},"description":{"value":"bio"}}`).
+		Patch("/users/edit").
 		Reply(400)
 
 	c := NewClient("https://api.getfriend.ly")
-	err := c.EditAccount(context.Background(), WithUserNickname("atennop"), WithUserDescription("bio"))
+	err := c.EditAccount(context.Background(), &Authorization{Id: 1, Token: Token("token")}, WithUserNickname("atennop"), WithUserDescription("bio"))
 	require.Error(t, err)
 }
