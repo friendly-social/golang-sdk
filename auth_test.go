@@ -66,3 +66,60 @@ func TestRegister_Failed(t *testing.T) {
 	_, err := client.Register(context.Background(), "atennop", "bio", Interests{"programming"}, &FileDescriptor{Id: 10, AccessHash: "hash"}, "https://github.com/Atennop1")
 	require.Error(t, err)
 }
+
+func TestSendLoginRequest_Success(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Post("/auth/email").
+		JSON(`{"email": "example@example.com"}`).
+		Reply(200)
+
+	client := NewClient("https://getfriend.ly")
+	err := client.SendLoginRequest(context.Background(), "example@example.com")
+	require.NoError(t, err)
+}
+
+func TestSendLoginRequest_Failed(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Post("/auth/email").
+		Reply(400)
+
+	client := NewClient("https://getfriend.ly")
+	err := client.SendLoginRequest(context.Background(), "example@example.com")
+	require.Error(t, err)
+}
+
+func TestConfirmLogin_Success(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Post("/auth/login").
+		JSON(`{"email":"example@example.com", "code":"11111111"}`).
+		Reply(200).
+		JSON(`{"id":1,"token":"token","accessHash":"hash"}`)
+
+	client := NewClient("https://getfriend.ly")
+	auth, err := client.ConfirmLogin(context.Background(), "example@example.com", "11111111")
+
+	require.NoError(t, err)
+	require.Equal(t, &Authorization{
+		Id:         1,
+		Token:      Token("token"),
+		AccessHash: UserAccessHash("hash"),
+	}, auth)
+}
+
+func TestConfirmLogin_Failed(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://getfriend.ly").
+		Post("/auth/login").
+		Reply(400)
+
+	client := NewClient("https://getfriend.ly")
+	_, err := client.ConfirmLogin(context.Background(), "example@example.com", "11111111")
+	require.Error(t, err)
+}
