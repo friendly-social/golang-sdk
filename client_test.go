@@ -32,7 +32,7 @@ func TestClients(t *testing.T) {
 func TestDo_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/ping").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -41,7 +41,7 @@ func TestDo_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"Trollge": "trollge"}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	auth := &Authorization{
 		Id:         1,
 		Token:      Token("token"),
@@ -58,7 +58,7 @@ func TestDo_Success(t *testing.T) {
 func TestDo_Cancel(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/ping").
 		Reply(200).
 		Delay(100 * time.Hour)
@@ -66,14 +66,14 @@ func TestDo_Cancel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.do(ctx, nil, "GET", "/ping", nil, nil)
 
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 func TestDo_FailedToMarshalBody(t *testing.T) {
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.do(context.Background(), nil, "GET", "/ping", func() {}, nil)
 	require.Error(t, err)
 }
@@ -85,7 +85,7 @@ func TestDo_InvalidURL(t *testing.T) {
 }
 
 func TestDo_InvalidRequest(t *testing.T) {
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.do(context.Background(), nil, "SOMETHING BAD!!!", "/ping", nil, nil)
 	require.Error(t, err)
 }
@@ -105,11 +105,11 @@ func TestDo_StatusCodes(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			defer gock.Off()
-			gock.New("https://getfriend.ly").
+			gock.New("https://api.getfriend.ly").
 				Get("/ping").
 				Reply(tc.code)
 
-			client := NewClient("https://getfriend.ly")
+			client := NewClient("https://api.getfriend.ly")
 			err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 
 			require.Error(t, err)
@@ -123,14 +123,14 @@ func TestDo_StatusCodes(t *testing.T) {
 func TestDo_InvalidResponse(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/ping").
 		Reply(200).
 		SetHeader("Content-Type", "application/json").
 		BodyString("bad")
 
 	var resp any
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
 	require.Error(t, err)
 }

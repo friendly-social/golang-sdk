@@ -60,7 +60,7 @@ func TestLinkEmail_Success(t *testing.T) {
 func TestLinkEmail_Taken(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://api.getfriend.ly"). Post("/email/link").
+	gock.New("https://api.getfriend.ly").Post("/email/link").
 		Reply(409)
 
 	c := NewClient("https://api.getfriend.ly")

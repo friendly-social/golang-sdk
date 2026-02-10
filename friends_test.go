@@ -26,7 +26,7 @@ func TestFriendValueTypes(t *testing.T) {
 func TestGenerateFriendToken_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/generate").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -34,7 +34,7 @@ func TestGenerateFriendToken_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"token":"token2"}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	token, err := client.GenerateFriendToken(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 
 	require.NoError(t, err)
@@ -44,11 +44,11 @@ func TestGenerateFriendToken_Success(t *testing.T) {
 func TestGenerateFriendToken_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/generate").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	_, err := client.GenerateFriendToken(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 	require.Error(t, err)
 }
@@ -56,7 +56,7 @@ func TestGenerateFriendToken_Failed(t *testing.T) {
 func TestAddFriend_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/add").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -65,7 +65,7 @@ func TestAddFriend_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"type":"nice"}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.AddFriend(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, "token2", 2)
 	require.NoError(t, err)
 }
@@ -73,7 +73,7 @@ func TestAddFriend_Success(t *testing.T) {
 func TestAddFriend_TokenExpired(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/add").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -82,7 +82,7 @@ func TestAddFriend_TokenExpired(t *testing.T) {
 		Reply(200).
 		JSON(`{"type":"FriendTokenExpired"}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.AddFriend(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, "token2", 2)
 
 	require.Error(t, err)
@@ -92,11 +92,11 @@ func TestAddFriend_TokenExpired(t *testing.T) {
 func TestAddFriend_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/add").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.AddFriend(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, "token2", 2)
 	require.Error(t, err)
 }
@@ -104,7 +104,7 @@ func TestAddFriend_Failed(t *testing.T) {
 func TestSendFriendRequest_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/request").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -112,7 +112,7 @@ func TestSendFriendRequest_Success(t *testing.T) {
 		JSON(`{"userId":2, "userAccessHash":"hash2"}`).
 		Reply(200)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.SendFriendRequest(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, "hash2")
 	require.NoError(t, err)
 }
@@ -120,11 +120,11 @@ func TestSendFriendRequest_Success(t *testing.T) {
 func TestSendFriendRequest_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/request").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.SendFriendRequest(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, "hash2")
 	require.Error(t, err)
 }
@@ -132,7 +132,7 @@ func TestSendFriendRequest_Failed(t *testing.T) {
 func TestDeclineFriendRequest_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/decline").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -140,7 +140,7 @@ func TestDeclineFriendRequest_Success(t *testing.T) {
 		JSON(`{"userId":2, "userAccessHash":"hash2"}`).
 		Reply(200)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.DeclineFriendRequest(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, "hash2")
 	require.NoError(t, err)
 }
@@ -148,11 +148,11 @@ func TestDeclineFriendRequest_Success(t *testing.T) {
 func TestDeclineFriendRequest_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/friends/decline").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	err := client.DeclineFriendRequest(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, "hash2")
 	require.Error(t, err)
 }

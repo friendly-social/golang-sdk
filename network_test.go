@@ -11,7 +11,7 @@ import (
 func TestGetNetworkDetails_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/network/details").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -19,7 +19,7 @@ func TestGetNetworkDetails_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"friends":[{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}]}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	network, err := client.GetNetworkDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 
 	require.NoError(t, err)
@@ -43,11 +43,11 @@ func TestGetNetworkDetails_Success(t *testing.T) {
 func TestGetNetworkDetails_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/network/details").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	_, err := client.GetNetworkDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 	require.Error(t, err)
 }

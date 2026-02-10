@@ -31,11 +31,11 @@ func TestFilesValueTypes(t *testing.T) {
 
 func TestGetFileURL_Success(t *testing.T) {
 	descriptor := &FileDescriptor{Id: 1, AccessHash: FileAccessHash("hash")}
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 
 	url, err := client.GetFileURL(descriptor)
 	require.NoError(t, err)
-	require.Equal(t, "https://getfriend.ly/files/download/1/hash", url)
+	require.Equal(t, "https://api.getfriend.ly/files/download/1/hash", url)
 }
 
 func TestGetFileURL_InvalidURL(t *testing.T) {
@@ -83,12 +83,12 @@ func TestUploadFile_Success(t *testing.T) {
 func TestUploadFile_Canceled(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Post("/files/upload").
 		Reply(200).
 		Delay(100 * time.Hour)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	file := strings.NewReader("hello world")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
@@ -99,7 +99,7 @@ func TestUploadFile_Canceled(t *testing.T) {
 }
 
 func TestUploadFile_AlreadyClosed(t *testing.T) {
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	file := strings.NewReader("hello world")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -125,7 +125,7 @@ func TestUploadFile_NewRequestFailed(t *testing.T) {
 		return nil, fmt.Errorf("unreachable")
 	})
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	file := strings.NewReader("hello world")
 
 	_, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
@@ -163,12 +163,12 @@ func TestDownloadFile_InvalidURL(t *testing.T) {
 func TestDownloadFile_Cancel(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/files/download/123/hash").
 		Reply(200).
 		Delay(100 * time.Hour)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
@@ -191,11 +191,11 @@ func TestDownloadFile_StatusCodes(t *testing.T) {
 
 	for _, tc := range cases {
 		defer gock.Off()
-		gock.New("https://getfriend.ly").
+		gock.New("https://api.getfriend.ly").
 			Get("/files/download/123/hash").
 			Reply(tc.code)
 
-		client := NewClient("https://getfriend.ly")
+		client := NewClient("https://api.getfriend.ly")
 		fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
 		_, err := client.DownloadFile(context.Background(), fd)
 
@@ -214,7 +214,7 @@ func TestDownloadFile_CreateRequestFailed(t *testing.T) {
 		return nil, fmt.Errorf("unreachable")
 	})
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
 
 	_, err := client.DownloadFile(context.Background(), fd)

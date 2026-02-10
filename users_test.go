@@ -75,7 +75,7 @@ func TestUsersValueTypes(t *testing.T) {
 func TestGetSelfDetails_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/users/details").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -83,7 +83,7 @@ func TestGetSelfDetails_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"id":1,"accessHash":"hash","nickname":"atennop","description":"something","interests":["vim"],"avatar":{"id":2,"accessHash":"hash2"}}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	self, err := client.GetSelfDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 
 	require.NoError(t, err)
@@ -105,11 +105,11 @@ func TestGetSelfDetails_Success(t *testing.T) {
 func TestGetSelfDetails_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/users/details").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	_, err := client.GetSelfDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 	require.Error(t, err)
 }
@@ -117,7 +117,7 @@ func TestGetSelfDetails_Failed(t *testing.T) {
 func TestGetUserDetails_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/users/details/2/hash2").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -125,7 +125,7 @@ func TestGetUserDetails_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	user, err := client.GetUserDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, UserAccessHash("hash2"))
 
 	require.NoError(t, err)
@@ -147,11 +147,11 @@ func TestGetUserDetails_Success(t *testing.T) {
 func TestGetUserDetails_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/users/details/2/hash2").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	_, err := client.GetUserDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")}, 2, UserAccessHash("hash2"))
 	require.Error(t, err)
 }

@@ -11,7 +11,7 @@ import (
 func TestGetFeedQueue_Success(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/feed/queue").
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
@@ -19,7 +19,7 @@ func TestGetFeedQueue_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2},"isRequest":true}]}`)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	feed, err := client.GetFeedQueue(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 
 	require.NoError(t, err)
@@ -36,11 +36,11 @@ func TestGetFeedQueue_Success(t *testing.T) {
 func TestGetFeedQueue_Failed(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("https://getfriend.ly").
+	gock.New("https://api.getfriend.ly").
 		Get("/feed/queue").
 		Reply(400)
 
-	client := NewClient("https://getfriend.ly")
+	client := NewClient("https://api.getfriend.ly")
 	_, err := client.GetFeedQueue(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
 	require.Error(t, err)
 }
