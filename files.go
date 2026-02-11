@@ -10,12 +10,6 @@ import (
 	"path"
 )
 
-// FileId represents the unique identifier of any file.
-type FileId int64
-
-// FileAccessHash represents the unique hash associated with file. Works in pair with FileId.
-type FileAccessHash string
-
 // FileDescriptor is a helper structure for composing file's ID and AccessHash.
 type FileDescriptor struct {
 	Id         FileId         `json:"id"`
@@ -27,24 +21,11 @@ type uploadFileResponse struct {
 	AccessHash FileAccessHash `json:"accessHash"`
 }
 
-var (
-	ErrFileAccessHashLengthMustBe256 = fmt.Errorf("file access hash must be 256 characters length")
-)
-
-// NewFileAccessHash creates new FileAccessHash or returns an error if hash length isn't 256.
-func NewFileAccessHash(s string) (FileAccessHash, error) {
-	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrFileAccessHashLengthMustBe256)
-	}
-
-	return FileAccessHash(s), nil
-}
-
 // GetFileURL returns file access URL for corresponding descriptor.
 func (c *Client) GetFileURL(fd *FileDescriptor) (string, error) {
-	url, err := url.JoinPath(c.url, fmt.Sprintf("/files/download/%d/%s", fd.Id, fd.AccessHash))
+	url, err := url.JoinPath(c.url, fmt.Sprintf("/files/download/%d/%s", fd.Id.value, fd.AccessHash.value))
 	if err != nil {
-		return "", fmt.Errorf("invalid path: %s + %s", c.url, fmt.Sprintf("/files/download/%d/%s", fd.Id, fd.AccessHash))
+		return "", fmt.Errorf("invalid path: %s + %s", c.url, fmt.Sprintf("/files/download/%d/%s", fd.Id.value, fd.AccessHash.value))
 	}
 
 	return url, nil

@@ -5,9 +5,6 @@ import (
 	"fmt"
 )
 
-// FriendToken is a token by which other users can add Token's owner to their friend list.
-type FriendToken string
-
 type addFriendRequest struct {
 	UserId UserId       `json:"userId"`
 	Token  *FriendToken `json:"token"`
@@ -26,26 +23,12 @@ type addFriendResponse struct {
 	Type string `json:"type"`
 }
 
-var (
-	ErrFriendTokenLengthMustBe256 = fmt.Errorf("friend token must be 256 characters length")
-	ErrFriendTokenExpired         = fmt.Errorf("friend token expired")
-)
-
-// NewFriendToken creates new FriendToken or returns an error if tokens length isn't 256.
-func NewFriendToken(s string) (FriendToken, error) {
-	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrFriendTokenLengthMustBe256)
-	}
-
-	return FriendToken(s), nil
-}
-
 // GenerateFriendToken creates token for Authorization's user by which another users can add them.
 func (c *Client) GenerateFriendToken(ctx context.Context, auth *Authorization) (FriendToken, error) {
 	var resp generateFriendTokenResponse
 	err := c.do(ctx, auth, "POST", "/friends/generate", nil, &resp)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate friend token: %w", err)
+		return FriendToken{}, fmt.Errorf("failed to generate friend token: %w", err)
 	}
 
 	return resp.Token, nil

@@ -67,7 +67,7 @@ func (c *Client) do(ctx context.Context, auth *Authorization, method, path strin
 	req.Header.Set("Content-Type", "application/json")
 	if auth != nil {
 		req.Header.Set("X-User-Id", fmt.Sprintf("%d", auth.Id))
-		req.Header.Set("X-Token", string(auth.Token))
+		req.Header.Set("X-Token", string(auth.Token.value))
 	}
 
 	return c.execute(req, result)

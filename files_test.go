@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,27 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/agiledragon/gomonkey"
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestFilesValueTypes(t *testing.T) {
-	t.Run("Valid FileAccesssHash", func(t *testing.T) {
-		hash, err := NewFileAccessHash(strings.Repeat("1", 256))
-		require.EqualValues(t, FileAccessHash(strings.Repeat("1", 256)), hash)
-		require.NoError(t, err)
-	})
-
-	t.Run("Invalid FileAccessHash", func(t *testing.T) {
-		_, err := NewFileAccessHash("1")
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrFileAccessHashLengthMustBe256)
-	})
-}
-
 func TestGetFileURL_Success(t *testing.T) {
-	descriptor := &FileDescriptor{Id: 1, AccessHash: FileAccessHash("hash")}
+	descriptor := &FileDescriptor{Id: MockFileId(1), AccessHash: MockFileAccessHash("hash")}
 	client := NewClient("https://api.getfriend.ly")
 
 	url, err := client.GetFileURL(descriptor)
@@ -39,7 +23,7 @@ func TestGetFileURL_Success(t *testing.T) {
 }
 
 func TestGetFileURL_InvalidURL(t *testing.T) {
-	descriptor := &FileDescriptor{Id: 1, AccessHash: FileAccessHash("hash")}
+	descriptor := &FileDescriptor{Id: MockFileId(1), AccessHash: MockFileAccessHash("hash")}
 	client := NewClient("::invalid")
 
 	_, err := client.GetFileURL(descriptor)
@@ -77,7 +61,7 @@ func TestUploadFile_Success(t *testing.T) {
 
 	fd, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
 	require.NoError(t, err)
-	require.Equal(t, &FileDescriptor{Id: 123, AccessHash: "hash"}, fd)
+	require.Equal(t, &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}, fd)
 }
 
 func TestUploadFile_Canceled(t *testing.T) {
@@ -118,17 +102,10 @@ func TestUploadFile_InvalidURL(t *testing.T) {
 }
 
 func TestUploadFile_NewRequestFailed(t *testing.T) {
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
-
-	patches.ApplyFunc(http.NewRequestWithContext, func(ctx context.Context, method, url string, body io.Reader) (*http.Request, error) {
-		return nil, fmt.Errorf("unreachable")
-	})
-
 	client := NewClient("https://api.getfriend.ly")
 	file := strings.NewReader("hello world")
 
-	_, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
+	_, err := client.UploadFile(nil, "1.2.3.4", "file.txt", file)
 	require.Error(t, err)
 }
 
@@ -141,7 +118,7 @@ func TestDownloadFile_Success(t *testing.T) {
 	defer ts.Close() //nolint:errcheck
 
 	client := NewClient(ts.URL)
-	fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
+	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 
 	reader, err := client.DownloadFile(context.Background(), fd)
 	require.NoError(t, err)
@@ -153,7 +130,7 @@ func TestDownloadFile_Success(t *testing.T) {
 }
 
 func TestDownloadFile_InvalidURL(t *testing.T) {
-	fd := &FileDescriptor{Id: 1, AccessHash: FileAccessHash("hash")}
+	fd := &FileDescriptor{Id: MockFileId(1), AccessHash: MockFileAccessHash("hash")}
 	client := NewClient("::invalid")
 
 	_, err := client.DownloadFile(context.Background(), fd)
@@ -169,7 +146,7 @@ func TestDownloadFile_Cancel(t *testing.T) {
 		Delay(100 * time.Hour)
 
 	client := NewClient("https://api.getfriend.ly")
-	fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
+	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
@@ -196,7 +173,7 @@ func TestDownloadFile_StatusCodes(t *testing.T) {
 			Reply(tc.code)
 
 		client := NewClient("https://api.getfriend.ly")
-		fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
+		fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 		_, err := client.DownloadFile(context.Background(), fd)
 
 		require.Error(t, err)
@@ -206,17 +183,10 @@ func TestDownloadFile_StatusCodes(t *testing.T) {
 	}
 }
 
-func TestDownloadFile_CreateRequestFailed(t *testing.T) {
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
-
-	patches.ApplyFunc(http.NewRequestWithContext, func(ctx context.Context, method, url string, body io.Reader) (*http.Request, error) {
-		return nil, fmt.Errorf("unreachable")
-	})
-
+func TestDownloadFile_NewRequestFailed(t *testing.T) {
 	client := NewClient("https://api.getfriend.ly")
-	fd := &FileDescriptor{Id: 123, AccessHash: "hash"}
+	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 
-	_, err := client.DownloadFile(context.Background(), fd)
+	_, err := client.DownloadFile(nil, fd)
 	require.Error(t, err)
 }

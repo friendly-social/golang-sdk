@@ -5,15 +5,6 @@ import (
 	"fmt"
 )
 
-// UserId represents the unique identifier of user.
-type UserId int64
-
-// UserAccessHash represents the unique hash associated with user. Works in trio with UserId and Token.
-type UserAccessHash string
-
-// Token represents access token for the user. Works in trio with UserId and UserAccessHash.
-type Token string
-
 // Authorization is a helper structure for composing user's ID, AccessHash and Token for authorization.
 type Authorization struct {
 	Id         UserId         `json:"id"`
@@ -44,28 +35,6 @@ type confirmLoginRequest struct {
 	Code  EmailCode `json:"code"`
 }
 
-var (
-	ErrTokenLengthMustBe256          = fmt.Errorf("token must be 256 characters long")
-	ErrUserAccessHashLengthMustBe256 = fmt.Errorf("user access hash must be 256 characters long")
-)
-
-// NewToken creates new Token or returns an error if token's length isn't 256.
-func NewToken(s string) (Token, error) {
-	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrTokenLengthMustBe256)
-	}
-
-	return Token(s), nil
-}
-
-// NewUserAccessHash creates new UserAccessHash or returns an error if hash length isn't 256.
-func NewUserAccessHash(s string) (UserAccessHash, error) {
-	if len(s) != 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrUserAccessHashLengthMustBe256)
-	}
-
-	return UserAccessHash(s), nil
-}
 
 // Register makes request for creating account using provided data and returns Authorization structure.
 func (c *Client) Register(ctx context.Context, nickname Nickname, description UserDescription, interests Interests, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {

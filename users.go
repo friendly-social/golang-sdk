@@ -5,21 +5,6 @@ import (
 	"fmt"
 )
 
-// Nickname represents user's name (not unique).
-type Nickname string
-
-// UserDescription represents user's description.
-type UserDescription string
-
-// Interest represents some user's interest.
-type Interest string
-
-// Interests represents complete list of user's interests.
-type Interests []Interest
-
-// SocialLink represents link to user's external social network.
-type SocialLink string
-
 // UserDetails represents complete information about some user: ID, AccessHash, Nickname, Description, list of Interests and Avatar.
 type UserDetails struct {
 	Id          UserId          `json:"id"`
@@ -29,6 +14,8 @@ type UserDetails struct {
 	Interests   Interests       `json:"interests"`
 	Avatar      *FileDescriptor `json:"avatar"`
 }
+
+type editAccountOption func(*editAccountRequest)
 
 type editAccountValue[T any] struct {
 	Value T `json:"value"`
@@ -40,61 +27,6 @@ type editAccountRequest struct {
 	Interests   *editAccountValue[Interests]       `json:"interests,omitempty"`
 	Avatar      *editAccountValue[*FileDescriptor] `json:"avatar,omitempty"`
 	SocialLink  *editAccountValue[SocialLink]      `json:"socialLink,omitempty"`
-}
-
-type editAccountOption func(*editAccountRequest)
-
-var (
-	ErrTooLongNickname       = fmt.Errorf("nickname must be less than 256 characters length")
-	ErrToLongUserDescription = fmt.Errorf("user description must be less than 1024 characters lengt")
-	ErrTooLongInterest       = fmt.Errorf("interest must be less than 64 characters length")
-	ErrTooMuchInterests      = fmt.Errorf("maximum amount of interests is 100")
-	ErrTooLongSocialLink     = fmt.Errorf("social link must be less than 2048 characters length")
-)
-
-// NewNickname creates new Nickname or returns an error if length is more than 256.
-func NewNickname(s string) (Nickname, error) {
-	if len(s) > 256 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrTooLongNickname)
-	}
-
-	return Nickname(s), nil
-}
-
-// NewUserDescription creates new UserDescription or returns an error if description is more than 1024.
-func NewUserDescription(s string) (UserDescription, error) {
-	if len(s) > 1024 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrToLongUserDescription)
-	}
-
-	return UserDescription(s), nil
-}
-
-// NewInterest creates new Interest or returns an error if length is more than 64.
-func NewInterest(s string) (Interest, error) {
-	if len(s) > 64 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrTooLongInterest)
-	}
-
-	return Interest(s), nil
-}
-
-// NewInterests creates new Interests or returns an error if thier amount is more than 100.
-func NewInterests(interests ...Interest) (Interests, error) {
-	if len(interests) > 100 {
-		return nil, fmt.Errorf("amount is %d: %w", len(interests), ErrTooMuchInterests)
-	}
-
-	return Interests(interests), nil
-}
-
-// NewSocialLink creates new SocialLink or returns an error if length is more than 2048.
-func NewSocialLink(s string) (SocialLink, error) {
-	if len(s) > 2048 {
-		return "", fmt.Errorf("length is %d: %w", len(s), ErrTooLongSocialLink)
-	}
-
-	return SocialLink(s), nil
 }
 
 // GetSelfDetails returns UserDetails structure for provided Authorization data.
@@ -111,7 +43,7 @@ func (c *Client) GetSelfDetails(ctx context.Context, auth *Authorization) (*User
 // GetUserDetails returns UserDetails for provided user's ID and AccessHash from provided Authorization's perspective.
 func (c *Client) GetUserDetails(ctx context.Context, auth *Authorization, userId UserId, accessHash UserAccessHash) (*UserDetails, error) {
 	var details UserDetails
-	err := c.do(ctx, auth, "GET", fmt.Sprintf("/users/details/%d/%s", userId, accessHash), nil, &details)
+	err := c.do(ctx, auth, "GET", fmt.Sprintf("/users/details/%d/%s", userId.value, accessHash.value), nil, &details)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user details: %w", err)
 	}
@@ -119,48 +51,38 @@ func (c *Client) GetUserDetails(ctx context.Context, auth *Authorization, userId
 	return &details, nil
 }
 
-// WithUserNickname applies new Nickname for editing account request.
-func WithUserNickname(nickname Nickname) editAccountOption {
+// EditNicknameOption applies new Nickname for editing account request.
+func EditNicknameOption(nickname Nickname) editAccountOption {
 	return func(r *editAccountRequest) {
-		if nickname != "" {
-			r.Nickname = &editAccountValue[Nickname]{nickname}
-		}
+		r.Nickname = &editAccountValue[Nickname]{nickname}
 	}
 }
 
-// WithUserDescription applies new UserDescription for editing account request.
-func WithUserDescription(description UserDescription) editAccountOption {
+// EditDescriptionOption applies new UserDescription for editing account request.
+func EditDescriptionOption(description UserDescription) editAccountOption {
 	return func(r *editAccountRequest) {
-		if description != "" {
-			r.Description = &editAccountValue[UserDescription]{description}
-		}
+		r.Description = &editAccountValue[UserDescription]{description}
 	}
 }
 
-// WithUserInterests applies new Interests for editing account request.
-func WithUserInterests(interests Interests) editAccountOption {
+// EditInterestsOption applies new Interests for editing account request.
+func EditInterestsOption(interests Interests) editAccountOption {
 	return func(r *editAccountRequest) {
-		if len(interests) != 0 {
-			r.Interests = &editAccountValue[Interests]{interests}
-		}
+		r.Interests = &editAccountValue[Interests]{interests}
 	}
 }
 
-// WithUserAvatar applies new Avatar for editing account request.
-func WithUserAvatar(avatar *FileDescriptor) editAccountOption {
+// EditAvatarOption applies new Avatar for editing account request.
+func EditAvatarOption(avatar *FileDescriptor) editAccountOption {
 	return func(r *editAccountRequest) {
-		if avatar != nil {
-			r.Avatar = &editAccountValue[*FileDescriptor]{avatar}
-		}
+		r.Avatar = &editAccountValue[*FileDescriptor]{avatar}
 	}
 }
 
-// WithUserSocialLink applies new SocialLink for editing account request.
-func WithUserSocialLink(link SocialLink) editAccountOption {
+// EditSocialLinkOption applies new SocialLink for editing account request.
+func EditSocialLinkOption(link SocialLink) editAccountOption {
 	return func(r *editAccountRequest) {
-		if link != "" {
-			r.SocialLink = &editAccountValue[SocialLink]{link}
-		}
+		r.SocialLink = &editAccountValue[SocialLink]{link}
 	}
 }
 

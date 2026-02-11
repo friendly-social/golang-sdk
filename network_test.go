@@ -20,21 +20,22 @@ func TestGetNetworkDetails_Success(t *testing.T) {
 		JSON(`{"friends":[{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}]}`)
 
 	client := NewClient("https://api.getfriend.ly")
-	network, err := client.GetNetworkDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
+	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
+	network, err := client.GetNetworkDetails(context.Background(), auth)
 
 	require.NoError(t, err)
 	require.Equal(t, &NetworkDetails{
 		Friends: []UserDetails{{
-			Id:          2,
-			AccessHash:  UserAccessHash("hash2"),
-			Nickname:    Nickname("tr3ble"),
-			Description: UserDescription("something2"),
-			Interests: Interests{
-				Interest("mac"),
-			},
+			Id:          MockUserId(2),
+			AccessHash:  MockUserAccessHash("hash2"),
+			Nickname:    MockNickname("tr3ble"),
+			Description: MockUserDescription("something2"),
+			Interests: MockInterests([]Interest{
+				MockInterest("mac"),
+			}),
 			Avatar: &FileDescriptor{
-				Id:         3,
-				AccessHash: FileAccessHash("hash3"),
+				Id:         MockFileId(3),
+				AccessHash: MockFileAccessHash("hash3"),
 			},
 		}},
 	}, network)
@@ -48,6 +49,6 @@ func TestGetNetworkDetails_Failed(t *testing.T) {
 		Reply(400)
 
 	client := NewClient("https://api.getfriend.ly")
-	_, err := client.GetNetworkDetails(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
+	_, err := client.GetNetworkDetails(context.Background(), nil)
 	require.Error(t, err)
 }

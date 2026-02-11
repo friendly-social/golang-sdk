@@ -20,7 +20,8 @@ func TestGetFeedQueue_Success(t *testing.T) {
 		JSON(`{"entries":[{"isExtendedNetwork":true,"commonFriends":[],"details":{"id":2},"isRequest":true}]}`)
 
 	client := NewClient("https://api.getfriend.ly")
-	feed, err := client.GetFeedQueue(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
+	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
+	feed, err := client.GetFeedQueue(context.Background(), auth)
 
 	require.NoError(t, err)
 	require.Equal(t, &FeedQueue{
@@ -28,7 +29,7 @@ func TestGetFeedQueue_Success(t *testing.T) {
 			IsRequest:         true,
 			IsExtendedNetwork: true,
 			CommonFriends:     []UserDetails{},
-			Details:           UserDetails{Id: 2},
+			Details:           UserDetails{Id: MockUserId(2)},
 		}},
 	}, feed)
 }
@@ -41,6 +42,6 @@ func TestGetFeedQueue_Failed(t *testing.T) {
 		Reply(400)
 
 	client := NewClient("https://api.getfriend.ly")
-	_, err := client.GetFeedQueue(context.Background(), &Authorization{Id: 1, Token: Token("token"), AccessHash: UserAccessHash("hash")})
+	_, err := client.GetFeedQueue(context.Background(), nil)
 	require.Error(t, err)
 }

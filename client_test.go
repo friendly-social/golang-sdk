@@ -43,9 +43,9 @@ func TestDo_Success(t *testing.T) {
 
 	client := NewClient("https://api.getfriend.ly")
 	auth := &Authorization{
-		Id:         1,
-		Token:      Token("token"),
-		AccessHash: UserAccessHash("hash"),
+		Id:         MockUserId(1),
+		Token:      MockToken("token"),
+		AccessHash: MockUserAccessHash("hash"),
 	}
 
 	var resp struct{ Trollge string }
