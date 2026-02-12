@@ -62,7 +62,7 @@ func (c *Client) DownloadFile(ctx context.Context, fd *FileDescriptor) (io.ReadC
 
 // UploadFile uploads file from io.Reader to the server and returns corresponding descriptor.
 // It accepts real IP address of client machine (required by Cloufdlare), filename by which file will be saved on server, and reader from which file will be read.
-func (c *Client) UploadFile(ctx context.Context, ip string, filename string, reader io.Reader) (*FileDescriptor, error) {
+func (c *Client) UploadFile(ctx context.Context, filename string, reader io.Reader) (*FileDescriptor, error) {
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
 	filename = path.Base(filename)
@@ -92,7 +92,6 @@ func (c *Client) UploadFile(ctx context.Context, ip string, filename string, rea
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("CF-Connecting-IP", ip)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	var resp uploadFileResponse

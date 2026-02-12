@@ -34,7 +34,6 @@ func TestUploadFile_Success(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodPost, r.Method)
 		require.Equal(t, "/files/upload", r.URL.Path)
-		require.Equal(t, "1.2.3.4", r.Header["Cf-Connecting-Ip"][0])
 
 		err := r.ParseMultipartForm(1 << 20)
 		require.NoError(t, err)
@@ -59,7 +58,7 @@ func TestUploadFile_Success(t *testing.T) {
 	client := NewClient(ts.URL)
 	file := strings.NewReader("hello world")
 
-	fd, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
+	fd, err := client.UploadFile(context.Background(), "file.txt", file)
 	require.NoError(t, err)
 	require.Equal(t, &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}, fd)
 }
@@ -78,7 +77,7 @@ func TestUploadFile_Canceled(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 
-	_, err := client.UploadFile(ctx, "1.2.3.4", "file.txt", file)
+	_, err := client.UploadFile(ctx, "file.txt", file)
 	require.Error(t, err)
 }
 
@@ -89,7 +88,7 @@ func TestUploadFile_AlreadyClosed(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := client.UploadFile(ctx, "1.2.3.4", "file.txt", file)
+	_, err := client.UploadFile(ctx, "file.txt", file)
 	require.Error(t, err)
 }
 
@@ -97,7 +96,7 @@ func TestUploadFile_InvalidURL(t *testing.T) {
 	client := NewClient("::invalid")
 	file := strings.NewReader("hello world")
 
-	_, err := client.UploadFile(context.Background(), "1.2.3.4", "file.txt", file)
+	_, err := client.UploadFile(context.Background(), "file.txt", file)
 	require.Error(t, err)
 }
 
@@ -105,7 +104,7 @@ func TestUploadFile_NewRequestFailed(t *testing.T) {
 	client := NewClient("https://api.getfriend.ly")
 	file := strings.NewReader("hello world")
 
-	_, err := client.UploadFile(nil, "1.2.3.4", "file.txt", file)
+	_, err := client.UploadFile(nil, "file.txt", file)
 	require.Error(t, err)
 }
 
