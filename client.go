@@ -17,11 +17,15 @@ type Client struct {
 	http *http.Client
 }
 
-var (
-	ErrUnauthorized = fmt.Errorf("unauthorized")
-	ErrForbidden    = fmt.Errorf("forbidden")
-	ErrNotFound     = fmt.Errorf("not found")
-)
+// APIError represents some error returned by FriendlyAPI.
+type APIError struct {
+	Code int
+	Body []byte
+}
+
+func (e APIError) Error() string {
+	return fmt.Sprintf("HTTP error with code %d, returned body:\n%s", e.Code, string(e.Body))
+}
 
 // NewClient creates basic Client with provided URL (on which backend is located).
 func NewClient(url string) *Client {
@@ -92,14 +96,10 @@ func (c *Client) execute(req *http.Request, result any) error {
 		return nil
 	}
 
-	switch resp.StatusCode {
-	case http.StatusUnauthorized:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrUnauthorized)
-	case http.StatusForbidden:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrForbidden)
-	case http.StatusNotFound:
-		return fmt.Errorf("%s %s: %w", req.Method, req.URL.Path, ErrNotFound)
-	default:
-		return fmt.Errorf("%s %s: unexpected request with status code %d", req.Method, req.URL.Path, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read HTTP error body")
 	}
+
+	return fmt.Errorf("unexpected response: %w", APIError{Code: resp.StatusCode, Body: body})
 }

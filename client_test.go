@@ -2,6 +2,10 @@ package sdk
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -90,16 +94,16 @@ func TestDo_InvalidRequest(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestDo_StatusCodes(t *testing.T) {
+func TestDo_APIError(t *testing.T) {
 	cases := []struct {
-		name    string
-		code    int
-		wantErr error
+		name string
+		code int
+		body []byte
 	}{
-		{"Unauthorized", 401, ErrUnauthorized},
-		{"Forbidden", 403, ErrForbidden},
-		{"Not Found", 404, ErrNotFound},
-		{"I'm a teapot", 418, nil},
+		{"Unauthorized", 401, []byte("invalid auth")},
+		{"Forbidden", 403, []byte("you are not admin")},
+		{"Not Found", 404, []byte("not found")},
+		{"I'm a teapot", 418, []byte("lol")},
 	}
 
 	for _, tc := range cases {
@@ -107,15 +111,16 @@ func TestDo_StatusCodes(t *testing.T) {
 			defer gock.Off()
 			gock.New("https://api.getfriend.ly").
 				Get("/ping").
-				Reply(tc.code)
+				Reply(tc.code).
+				Body(io.NopCloser(strings.NewReader(string(tc.body))))
 
 			client := NewClient("https://api.getfriend.ly")
 			err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 
-			require.Error(t, err)
-			if tc.wantErr != nil {
-				require.ErrorIs(t, err, tc.wantErr)
-			}
+			var apiError APIError
+			require.ErrorAs(t, err, &apiError)
+			require.Equal(t, tc.code, apiError.Code)
+			require.Equal(t, tc.body, apiError.Body)
 		})
 	}
 }
@@ -126,11 +131,32 @@ func TestDo_InvalidResponse(t *testing.T) {
 	gock.New("https://api.getfriend.ly").
 		Get("/ping").
 		Reply(200).
-		SetHeader("Content-Type", "application/json").
 		BodyString("bad")
 
 	var resp any
 	client := NewClient("https://api.getfriend.ly")
 	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
+	require.Error(t, err)
+}
+
+type errorReader struct{}
+
+func (r *errorReader) Read([]byte) (int, error) {
+	return 0, fmt.Errorf("something went wrong...")
+}
+
+func TestDo_FailedToReadError(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.getfriend.ly").
+		Get("/ping").
+		Reply(418).
+		Map(func(resp *http.Response) *http.Response {
+			resp.Body = io.NopCloser(&errorReader{})
+			return resp
+		})
+
+	client := NewClient("https://api.getfriend.ly")
+	err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 	require.Error(t, err)
 }

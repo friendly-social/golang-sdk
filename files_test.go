@@ -104,7 +104,7 @@ func TestUploadFile_NewRequestFailed(t *testing.T) {
 	client := NewClient("https://api.getfriend.ly")
 	file := strings.NewReader("hello world")
 
-	_, err := client.UploadFile(nil, "file.txt", file)
+	_, err := client.UploadFile(nil, "file.txt", file) //nolint:staticcheck
 	require.Error(t, err)
 }
 
@@ -155,30 +155,34 @@ func TestDownloadFile_Cancel(t *testing.T) {
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
-func TestDownloadFile_StatusCodes(t *testing.T) {
+func TestDownloadFile_Error(t *testing.T) {
 	cases := []struct {
-		name    string
-		code    int
-		wantErr error
+		name string
+		code int
+		body []byte
 	}{
-		{"Not Found", 404, ErrNotFound},
-		{"I'm a teapot", 418, nil},
+		{"Unauthorized", 401, []byte("invalid auth")},
+		{"Forbidden", 403, []byte("you are not admin")},
+		{"Not Found", 404, []byte("not found")},
+		{"I'm a teapot", 418, []byte("lol")},
 	}
 
 	for _, tc := range cases {
 		defer gock.Off()
+
 		gock.New("https://api.getfriend.ly").
 			Get("/files/download/123/hash").
-			Reply(tc.code)
+			Reply(tc.code).
+			Body(io.NopCloser(strings.NewReader(string(tc.body))))
 
 		client := NewClient("https://api.getfriend.ly")
 		fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 		_, err := client.DownloadFile(context.Background(), fd)
 
-		require.Error(t, err)
-		if tc.wantErr != nil {
-			require.ErrorIs(t, err, tc.wantErr)
-		}
+		var apiError APIError
+		require.ErrorAs(t, err, &apiError)
+		require.Equal(t, tc.code, apiError.Code)
+		require.Equal(t, tc.body, apiError.Body)
 	}
 }
 
@@ -186,6 +190,23 @@ func TestDownloadFile_NewRequestFailed(t *testing.T) {
 	client := NewClient("https://api.getfriend.ly")
 	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 
-	_, err := client.DownloadFile(nil, fd)
+	_, err := client.DownloadFile(nil, fd) //nolint:staticcheck
+	require.Error(t, err)
+}
+
+func TestDownloadFile_FailedToReadError(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.getfriend.ly").
+		Get("/files/download/123/hash").
+		Reply(418).
+		Map(func(resp *http.Response) *http.Response {
+			resp.Body = io.NopCloser(&errorReader{})
+			return resp
+		})
+
+	client := NewClient("https://api.getfriend.ly")
+	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
+	_, err := client.DownloadFile(context.Background(), fd)
 	require.Error(t, err)
 }

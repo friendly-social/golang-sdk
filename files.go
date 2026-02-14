@@ -52,16 +52,16 @@ func (c *Client) DownloadFile(ctx context.Context, fd *FileDescriptor) (io.ReadC
 		return resp.Body, nil
 	}
 
-	switch resp.StatusCode {
-	case http.StatusNotFound:
-		return nil, fmt.Errorf("failed to download file: %w", ErrNotFound)
-	default:
-		return nil, fmt.Errorf("failed to download file: unexpected status code %d", resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read HTTP error body")
 	}
+
+	return nil, fmt.Errorf("unexpected response: %w", APIError{Code: resp.StatusCode, Body: body})
 }
 
 // UploadFile uploads file from io.Reader to the server and returns corresponding descriptor.
-// It accepts real IP address of client machine (required by Cloufdlare), filename by which file will be saved on server, and reader from which file will be read.
+// It accepts filename by which file will be saved on server, and reader from which file will be read.
 func (c *Client) UploadFile(ctx context.Context, filename string, reader io.Reader) (*FileDescriptor, error) {
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)

@@ -2,8 +2,9 @@ package sdk
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
+	"net/http"
 )
 
 type linkEmailRequest struct {
@@ -26,8 +27,9 @@ func (c *Client) LinkEmail(ctx context.Context, auth *Authorization, email Email
 
 	err := c.do(ctx, auth, "POST", "/email/link", req, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), "status code 409") {
-			return fmt.Errorf("%w: %w", ErrEmailTaken, err)
+		var apiError APIError
+		if errors.As(err, &apiError) && apiError.Code == http.StatusConflict {
+			return fmt.Errorf("failed to link e-mail: %w", ErrEmailTaken)
 		}
 
 		return err
