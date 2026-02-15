@@ -17,7 +17,7 @@ type Client struct {
 	http *http.Client
 }
 
-// APIError represents some error returned by FriendlyAPI.
+// APIError represents some error returned by Friendly API.
 type APIError struct {
 	Code int
 	Body []byte

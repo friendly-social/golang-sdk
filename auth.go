@@ -13,11 +13,11 @@ type Authorization struct {
 }
 
 type registerRequest struct {
-	Nickname    *Nickname        `json:"nickname"`
-	Description *UserDescription `json:"description"`
-	Interests   *Interests       `json:"interests"`
-	Avatar      *FileDescriptor  `json:"avatar"`
-	SocialLink  *SocialLink      `json:"socialLink"`
+	Nickname    Nickname        `json:"nickname"`
+	Description UserDescription `json:"description"`
+	Interests   Interests       `json:"interests"`
+	Avatar      *FileDescriptor `json:"avatar"`
+	SocialLink  SocialLink      `json:"socialLink"`
 }
 
 type registerResponse struct {
@@ -35,15 +35,14 @@ type confirmLoginRequest struct {
 	Code  EmailCode `json:"code"`
 }
 
-
 // Register makes request for creating account using provided data and returns Authorization structure.
 func (c *Client) Register(ctx context.Context, nickname Nickname, description UserDescription, interests Interests, avatar *FileDescriptor, link SocialLink) (*Authorization, error) {
 	req := registerRequest{
-		Nickname:    &nickname,
-		Description: &description,
-		Interests:   &interests,
+		Nickname:    nickname,
+		Description: description,
+		Interests:   interests,
 		Avatar:      avatar,
-		SocialLink:  &link,
+		SocialLink:  link,
 	}
 
 	var resp registerResponse

@@ -39,6 +39,10 @@ func TestUsersTypes(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrTooLongNickname)
 
+		_, err = NewNickname("")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrEmptyNickname)
+
 		data, err := json.Marshal(nickname)
 		require.NoError(t, err)
 		require.Equal(t, `"atennop"`, string(data))
@@ -56,7 +60,11 @@ func TestUsersTypes(t *testing.T) {
 
 		_, err = NewUserDescription(strings.Repeat("1", 4096))
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrToLongUserDescription)
+		require.ErrorIs(t, err, ErrTooLongUserDescription)
+
+		_, err = NewUserDescription("")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrEmptyUserDescription)
 
 		data, err := json.Marshal(desc)
 		require.NoError(t, err)
@@ -77,6 +85,10 @@ func TestUsersTypes(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrTooLongInterest)
 
+		_, err = NewInterest("")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrEmptyInterest)
+
 		data, err := json.Marshal(interest)
 		require.NoError(t, err)
 		require.Equal(t, `"vim"`, string(data))
@@ -96,6 +108,10 @@ func TestUsersTypes(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrTooMuchInterests)
 
+		_, err = NewInterests(nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrEmptyInterests)
+
 		data, err := json.Marshal(interests)
 		require.NoError(t, err)
 		require.Equal(t, `["vim","debian"]`, string(data))
@@ -114,6 +130,10 @@ func TestUsersTypes(t *testing.T) {
 		_, err = NewSocialLink(strings.Repeat("1", 4096))
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrTooLongSocialLink)
+
+		_, err = NewSocialLink("")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrEmptySocialLink)
 
 		data, err := json.Marshal(link)
 		require.NoError(t, err)
