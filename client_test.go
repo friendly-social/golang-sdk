@@ -15,21 +15,19 @@ import (
 
 func TestClients(t *testing.T) {
 	t.Run("Default Client", func(t *testing.T) {
-		client := NewClient("https://example.com")
+		client := NewClient()
+		require.Equal(t, client.url, "https://api.getfriend.ly")
+		require.Equal(t, client.http.Timeout, 30*time.Second)
+	})
+
+	t.Run("Customized Client", func(t *testing.T) {
+		client := NewClient().
+			WithHTTPClient(&http.Client{}).
+			WithTimeout(5 * time.Second).
+			WithBaseURL("https://example.com")
+
 		require.Equal(t, client.url, "https://example.com")
-		require.Equal(t, client.http.Timeout, 30*time.Second)
-	})
-
-	t.Run("Localhost Client", func(t *testing.T) {
-		client := NewLocalhostClient(8080)
-		require.Equal(t, client.url, "http://localhost:8080")
-		require.Equal(t, client.http.Timeout, 30*time.Second)
-	})
-
-	t.Run("Production Client", func(t *testing.T) {
-		client := NewProductionClient()
-		require.Equal(t, client.url, "https://api.getfriend.ly/")
-		require.Equal(t, client.http.Timeout, 30*time.Second)
+		require.Equal(t, client.http, &http.Client{Timeout: 5 * time.Second})
 	})
 }
 
@@ -45,7 +43,7 @@ func TestDo_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"Trollge": "trollge"}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{
 		Id:         MockUserId(1),
 		Token:      MockToken("token"),
@@ -70,26 +68,29 @@ func TestDo_Cancel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.do(ctx, nil, "GET", "/ping", nil, nil)
 
+	require.Error(t, err)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 func TestDo_FailedToMarshalBody(t *testing.T) {
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.do(context.Background(), nil, "GET", "/ping", func() {}, nil)
 	require.Error(t, err)
 }
 
 func TestDo_InvalidURL(t *testing.T) {
-	client := NewClient("::invalid")
+	client := NewClient().
+		WithBaseURL("::invalid")
+
 	err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 	require.Error(t, err)
 }
 
 func TestDo_InvalidRequest(t *testing.T) {
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.do(context.Background(), nil, "SOMETHING BAD!!!", "/ping", nil, nil)
 	require.Error(t, err)
 }
@@ -114,7 +115,7 @@ func TestDo_APIError(t *testing.T) {
 				Reply(tc.code).
 				Body(io.NopCloser(strings.NewReader(string(tc.body))))
 
-			client := NewClient("https://api.getfriend.ly")
+			client := NewClient()
 			err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 
 			var apiError APIError
@@ -134,7 +135,7 @@ func TestDo_InvalidResponse(t *testing.T) {
 		BodyString("bad")
 
 	var resp any
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.do(context.Background(), nil, "GET", "/ping", nil, &resp)
 	require.Error(t, err)
 }
@@ -156,7 +157,7 @@ func TestDo_FailedToReadError(t *testing.T) {
 			return resp
 		})
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.do(context.Background(), nil, "GET", "/ping", nil, nil)
 	require.Error(t, err)
 }

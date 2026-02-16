@@ -19,7 +19,7 @@ func TestLinkEmail_Success(t *testing.T) {
 		JSON(`{"email":"example@example.com"}`).
 		Reply(200)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := c.LinkEmail(context.Background(), auth, MockEmail("example@example.com"))
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestLinkEmail_Taken(t *testing.T) {
 		Post("/email/link").
 		Reply(409)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	err := c.LinkEmail(context.Background(), nil, MockEmail("example@example.com"))
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrEmailTaken)
@@ -45,7 +45,7 @@ func TestLinkEmail_Failed(t *testing.T) {
 		Post("/email/link").
 		Reply(400)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	err := c.LinkEmail(context.Background(), nil, MockEmail("example@example.com"))
 	require.Error(t, err)
 }
@@ -61,7 +61,7 @@ func TestConfirmEmail_Success(t *testing.T) {
 		JSON(`{"code":11111111}`).
 		Reply(200)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := c.ConfirmEmail(context.Background(), auth, MockEmailCode(11111111))
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestConfirmEmail_Failed(t *testing.T) {
 		Post("/email/confirm").
 		Reply(400)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	err := c.ConfirmEmail(context.Background(), nil, MockEmailCode(11111111))
 	require.Error(t, err)
 }
@@ -89,7 +89,7 @@ func TestUnlinkEmail_Success(t *testing.T) {
 		MatchHeader("X-Token", "token").
 		Reply(200)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := c.UnlinkEmail(context.Background(), auth)
 	require.NoError(t, err)
@@ -102,7 +102,7 @@ func TestUnlinkEmail_Failed(t *testing.T) {
 		Post("/email/unlink").
 		Reply(400)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	err := c.UnlinkEmail(context.Background(), nil)
 	require.Error(t, err)
 }

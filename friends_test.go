@@ -19,7 +19,7 @@ func TestGenerateFriendToken_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"token":"token2"}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	token, err := client.GenerateFriendToken(context.Background(), auth)
 
@@ -34,7 +34,7 @@ func TestGenerateFriendToken_Failed(t *testing.T) {
 		Post("/friends/generate").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	_, err := client.GenerateFriendToken(context.Background(), nil)
 	require.Error(t, err)
 }
@@ -51,7 +51,7 @@ func TestAddFriend_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"type":"nice"}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := client.AddFriend(context.Background(), auth, MockFriendToken("token2"), MockUserId(2))
 	require.NoError(t, err)
@@ -69,7 +69,7 @@ func TestAddFriend_TokenExpired(t *testing.T) {
 		Reply(200).
 		JSON(`{"type":"FriendTokenExpired"}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := client.AddFriend(context.Background(), auth, MockFriendToken("token2"), MockUserId(2))
 
@@ -84,7 +84,7 @@ func TestAddFriend_Failed(t *testing.T) {
 		Post("/friends/add").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.AddFriend(context.Background(), nil, MockFriendToken("token2"), MockUserId(2))
 	require.Error(t, err)
 }
@@ -100,7 +100,7 @@ func TestSendFriendRequest_Success(t *testing.T) {
 		JSON(`{"userId":2, "userAccessHash":"hash2"}`).
 		Reply(200)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := client.SendFriendRequest(context.Background(), auth, MockUserId(2), MockUserAccessHash("hash2"))
 	require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestSendFriendRequest_Failed(t *testing.T) {
 		Post("/friends/request").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.SendFriendRequest(context.Background(), nil, MockUserId(2), MockUserAccessHash("hash2"))
 	require.Error(t, err)
 }
@@ -129,7 +129,7 @@ func TestDeclineFriendRequest_Success(t *testing.T) {
 		JSON(`{"userId":2, "userAccessHash":"hash2"}`).
 		Reply(200)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := client.DeclineFriendRequest(context.Background(), auth, MockUserId(2), MockUserAccessHash("hash2"))
 	require.NoError(t, err)
@@ -142,7 +142,7 @@ func TestDeclineFriendRequest_Failed(t *testing.T) {
 		Post("/friends/decline").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.DeclineFriendRequest(context.Background(), nil, MockUserId(2), MockUserAccessHash("hash2"))
 	require.Error(t, err)
 }

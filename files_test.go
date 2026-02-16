@@ -15,7 +15,7 @@ import (
 
 func TestGetFileURL_Success(t *testing.T) {
 	descriptor := &FileDescriptor{Id: MockFileId(1), AccessHash: MockFileAccessHash("hash")}
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 
 	url, err := client.GetFileURL(descriptor)
 	require.NoError(t, err)
@@ -24,7 +24,8 @@ func TestGetFileURL_Success(t *testing.T) {
 
 func TestGetFileURL_InvalidURL(t *testing.T) {
 	descriptor := &FileDescriptor{Id: MockFileId(1), AccessHash: MockFileAccessHash("hash")}
-	client := NewClient("::invalid")
+	client := NewClient().
+		WithBaseURL("::invalid")
 
 	_, err := client.GetFileURL(descriptor)
 	require.Error(t, err)
@@ -55,10 +56,12 @@ func TestUploadFile_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	client := NewClient(ts.URL)
-	file := strings.NewReader("hello world")
+	client := NewClient().
+		WithBaseURL(ts.URL)
 
+	file := strings.NewReader("hello world")
 	fd, err := client.UploadFile(context.Background(), "file.txt", file)
+
 	require.NoError(t, err)
 	require.Equal(t, &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}, fd)
 }
@@ -71,7 +74,7 @@ func TestUploadFile_Canceled(t *testing.T) {
 		Reply(200).
 		Delay(100 * time.Hour)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	file := strings.NewReader("hello world")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
@@ -82,7 +85,7 @@ func TestUploadFile_Canceled(t *testing.T) {
 }
 
 func TestUploadFile_AlreadyClosed(t *testing.T) {
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	file := strings.NewReader("hello world")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -93,15 +96,17 @@ func TestUploadFile_AlreadyClosed(t *testing.T) {
 }
 
 func TestUploadFile_InvalidURL(t *testing.T) {
-	client := NewClient("::invalid")
-	file := strings.NewReader("hello world")
+	client := NewClient().
+		WithBaseURL("::invalid")
 
+	file := strings.NewReader("hello world")
 	_, err := client.UploadFile(context.Background(), "file.txt", file)
+
 	require.Error(t, err)
 }
 
 func TestUploadFile_NewRequestFailed(t *testing.T) {
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	file := strings.NewReader("hello world")
 
 	_, err := client.UploadFile(nil, "file.txt", file) //nolint:staticcheck
@@ -116,21 +121,24 @@ func TestDownloadFile_Success(t *testing.T) {
 	}))
 	defer ts.Close() //nolint:errcheck
 
-	client := NewClient(ts.URL)
-	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
+	client := NewClient().
+		WithBaseURL(ts.URL)
 
+	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 	reader, err := client.DownloadFile(context.Background(), fd)
 	require.NoError(t, err)
-	defer reader.Close() //nolint:errcheck
 
+	defer reader.Close() //nolint:errcheck
 	data, err := io.ReadAll(reader)
+
 	require.NoError(t, err)
 	require.Equal(t, "hello", string(data))
 }
 
 func TestDownloadFile_InvalidURL(t *testing.T) {
 	fd := &FileDescriptor{Id: MockFileId(1), AccessHash: MockFileAccessHash("hash")}
-	client := NewClient("::invalid")
+	client := NewClient().
+		WithBaseURL("::invalid")
 
 	_, err := client.DownloadFile(context.Background(), fd)
 	require.Error(t, err)
@@ -144,7 +152,7 @@ func TestDownloadFile_Cancel(t *testing.T) {
 		Reply(200).
 		Delay(100 * time.Hour)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
@@ -175,7 +183,7 @@ func TestDownloadFile_Error(t *testing.T) {
 			Reply(tc.code).
 			Body(io.NopCloser(strings.NewReader(string(tc.body))))
 
-		client := NewClient("https://api.getfriend.ly")
+		client := NewClient()
 		fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 		_, err := client.DownloadFile(context.Background(), fd)
 
@@ -187,7 +195,7 @@ func TestDownloadFile_Error(t *testing.T) {
 }
 
 func TestDownloadFile_NewRequestFailed(t *testing.T) {
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 
 	_, err := client.DownloadFile(nil, fd) //nolint:staticcheck
@@ -205,7 +213,7 @@ func TestDownloadFile_FailedToReadError(t *testing.T) {
 			return resp
 		})
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	fd := &FileDescriptor{Id: MockFileId(123), AccessHash: MockFileAccessHash("hash")}
 	_, err := client.DownloadFile(context.Background(), fd)
 	require.Error(t, err)

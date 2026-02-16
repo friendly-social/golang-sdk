@@ -28,23 +28,31 @@ func (e APIError) Error() string {
 }
 
 // NewClient creates basic Client with provided URL (on which backend is located).
-func NewClient(url string) *Client {
+func NewClient() *Client {
 	return &Client{
-		url: url,
+		url: "https://api.getfriend.ly",
 		http: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 	}
 }
 
-// NewLocalhostClient creates Client with localhost URL and provided port.
-func NewLocalhostClient(port int) *Client {
-	return NewClient(fmt.Sprintf("http://localhost:%d", port))
+// WithHTTPClient sets custom http.Client for Friendly Client.
+func (c *Client) WithHTTPClient(http *http.Client) *Client {
+	c.http = http
+	return c
 }
 
-// NewProductionClient creates Client with actual backend.
-func NewProductionClient() *Client {
-	return NewClient("https://api.getfriend.ly/")
+// WithTimeout sets custom request timeout for Client.
+func (c *Client) WithTimeout(timeout time.Duration) *Client {
+	c.http.Timeout = timeout
+	return c
+}
+
+// WithBaseURL sets custom URL for Client.
+func (c *Client) WithBaseURL(url string) *Client {
+	c.url = url
+	return c
 }
 
 func (c *Client) do(ctx context.Context, auth *Authorization, method, path string, body any, result any) error {

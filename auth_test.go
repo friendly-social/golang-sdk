@@ -17,7 +17,7 @@ func TestRegister_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"id":1,"token":"token","accessHash":"hash"}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth, err := client.Register(context.Background(),
 		MockNickname("atennop"),
 		MockUserDescription("bio"),
@@ -40,7 +40,7 @@ func TestRegister_Failed(t *testing.T) {
 		Post("/auth/generate").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	_, err := client.Register(context.Background(),
 		MockNickname("atennop"),
 		MockUserDescription("bio"),
@@ -59,7 +59,7 @@ func TestSendLoginRequest_Success(t *testing.T) {
 		JSON(`{"email": "example@example.com"}`).
 		Reply(200)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.SendLoginRequest(context.Background(), MockEmail("example@example.com"))
 	require.NoError(t, err)
 }
@@ -71,7 +71,7 @@ func TestSendLoginRequest_Failed(t *testing.T) {
 		Post("/auth/email").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	err := client.SendLoginRequest(context.Background(), MockEmail("example@example.com"))
 	require.Error(t, err)
 }
@@ -85,7 +85,7 @@ func TestConfirmLogin_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"id":1,"token":"token","accessHash":"hash"}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth, err := client.ConfirmLogin(context.Background(), MockEmail("example@example.com"), MockEmailCode(11111111))
 
 	require.NoError(t, err)
@@ -103,7 +103,7 @@ func TestConfirmLogin_Failed(t *testing.T) {
 		Post("/auth/login").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	_, err := client.ConfirmLogin(context.Background(), MockEmail("example@example.com"), MockEmailCode(11111111))
 	require.Error(t, err)
 }

@@ -20,7 +20,7 @@ func TestGetSelfDetails_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"id":1,"accessHash":"hash","nickname":"atennop","description":"something","interests":["vim"],"avatar":{"id":2,"accessHash":"hash2"}}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	self, err := client.GetSelfDetails(context.Background(), auth)
 
@@ -47,7 +47,7 @@ func TestGetSelfDetails_Failed(t *testing.T) {
 		Get("/users/details").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	_, err := client.GetSelfDetails(context.Background(), nil)
 	require.Error(t, err)
 }
@@ -63,7 +63,7 @@ func TestGetUserDetails_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	user, err := client.GetUserDetails(context.Background(), auth, MockUserId(2), MockUserAccessHash("hash2"))
 
@@ -90,7 +90,7 @@ func TestGetUserDetails_Failed(t *testing.T) {
 		Get("/users/details/2/hash2").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	_, err := client.GetUserDetails(context.Background(), nil, MockUserId(2), MockUserAccessHash("hash2"))
 	require.Error(t, err)
 }
@@ -168,7 +168,7 @@ func TestOptions(t *testing.T) {
 						JSON(tc.expectedBodies[i]).
 						Reply(200)
 
-					c := NewClient("https://api.getfriend.ly")
+					c := NewClient()
 					auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 					err := c.EditAccount(context.Background(), auth, tc.options[i])
 					require.NoError(t, err)
@@ -185,7 +185,7 @@ func TestEditAccount_Empty(t *testing.T) {
 		Patch("/users/edit").
 		Reply(200)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	err := c.EditAccount(context.Background(), nil)
 
 	require.NoError(t, err)
@@ -203,7 +203,7 @@ func TestEditAccount_Success(t *testing.T) {
 		JSON(`{"nickname":{"value":"atennop"},"description":{"value":"bio"}}`).
 		Reply(200)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := c.EditAccount(context.Background(), auth, EditNicknameOption(MockNickname("atennop")), EditDescriptionOption(MockUserDescription("bio")))
 	require.NoError(t, err)
@@ -216,7 +216,7 @@ func TestEditAccount_Failed(t *testing.T) {
 		Patch("/users/edit").
 		Reply(400)
 
-	c := NewClient("https://api.getfriend.ly")
+	c := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	err := c.EditAccount(context.Background(), auth, EditNicknameOption(MockNickname("atennop")), EditDescriptionOption(MockUserDescription("bio")))
 	require.Error(t, err)

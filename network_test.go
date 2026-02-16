@@ -19,7 +19,7 @@ func TestGetNetworkDetails_Success(t *testing.T) {
 		Reply(200).
 		JSON(`{"friends":[{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}]}`)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
 	network, err := client.GetNetworkDetails(context.Background(), auth)
 
@@ -48,7 +48,7 @@ func TestGetNetworkDetails_Failed(t *testing.T) {
 		Get("/network/details").
 		Reply(400)
 
-	client := NewClient("https://api.getfriend.ly")
+	client := NewClient()
 	_, err := client.GetNetworkDetails(context.Background(), nil)
 	require.Error(t, err)
 }
