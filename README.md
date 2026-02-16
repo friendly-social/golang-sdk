@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	client := sdk.NewClient("https://api.getfriend.ly")
+	client := sdk.NewClient()
 	ctx := context.Background()
 
 	auth, err := client.Register(ctx,
