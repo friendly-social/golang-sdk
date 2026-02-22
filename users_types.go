@@ -7,7 +7,7 @@ import (
 
 var (
 	ErrTooLongNickname        = fmt.Errorf("nickname must be less than 256 characters length")
-	ErrTooLongUserDescription = fmt.Errorf("user description must be less than 1024 characters lengt")
+	ErrTooLongUserDescription = fmt.Errorf("user description must be less than 1024 characters length")
 	ErrTooLongInterest        = fmt.Errorf("interest must be less than 64 characters length")
 	ErrTooMuchInterests       = fmt.Errorf("maximum amount of interests is 100")
 	ErrTooLongSocialLink      = fmt.Errorf("social link must be less than 2048 characters length")

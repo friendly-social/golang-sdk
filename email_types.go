@@ -72,3 +72,23 @@ func (e EmailCode) MarshalJSON() ([]byte, error) {
 func (e *EmailCode) UnmarshalJSON(bytes []byte) error {
 	return json.Unmarshal(bytes, &e.value)
 }
+
+// --- EMAIL LOCALE ---
+
+// EmailLocale represents e-mail locale.
+type EmailLocale struct {
+	value string
+}
+
+// NewEmailLocale creates new EmailLocale object.
+func NewEmailLocale(s string) EmailLocale {
+	return EmailLocale{value: s}
+}
+
+func (e EmailLocale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.value)
+}
+
+func (e *EmailLocale) UnmarshalJSON(bytes []byte) error {
+	return json.Unmarshal(bytes, &e.value)
+}

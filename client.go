@@ -56,11 +56,20 @@ func (c *Client) WithBaseURL(url string) *Client {
 }
 
 func (c *Client) do(ctx context.Context, auth *Authorization, method, path string, body any, result any) error {
+	req, err := c.newRequest(ctx, auth, method, path, body)
+	if err != nil {
+		return err
+	}
+
+	return c.execute(req, result)
+}
+
+func (c *Client) newRequest(ctx context.Context, auth *Authorization, method, path string, body any) (*http.Request, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonData, err := json.Marshal(body)
 		if err != nil {
-			return fmt.Errorf("failed to marshal body: %w", err)
+			return nil, fmt.Errorf("failed to marshal body: %w", err)
 		}
 
 		bodyReader = bytes.NewReader(jsonData)
@@ -68,12 +77,12 @@ func (c *Client) do(ctx context.Context, auth *Authorization, method, path strin
 
 	completePath, err := url.JoinPath(c.url, path)
 	if err != nil {
-		return fmt.Errorf("invalid path: %s + %s", c.url, path)
+		return nil, fmt.Errorf("invalid path: %s + %s", c.url, path)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, completePath, bodyReader)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -82,7 +91,7 @@ func (c *Client) do(ctx context.Context, auth *Authorization, method, path strin
 		req.Header.Set("X-Token", string(auth.Token.value))
 	}
 
-	return c.execute(req, result)
+	return req, nil
 }
 
 func (c *Client) execute(req *http.Request, result any) error {

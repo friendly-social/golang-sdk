@@ -20,19 +20,26 @@ var (
 )
 
 // LinkEmail sends request for linking unverified e-mail to the Authorization.
-func (c *Client) LinkEmail(ctx context.Context, auth *Authorization, email Email) error {
+func (c *Client) LinkEmail(ctx context.Context, auth *Authorization, email Email, locale EmailLocale) error {
 	req := linkEmailRequest{
 		Email: email,
 	}
 
-	err := c.do(ctx, auth, "POST", "/email/link", req, nil)
+	httpReq, err := c.newRequest(ctx, auth, "POST", "/email/link", req)
+	if err != nil {
+		return fmt.Errorf("failed to link e-mail: %w", err)
+	}
+
+	httpReq.Header.Set("X-Locale", locale.value)
+
+	err = c.execute(httpReq, nil)
 	if err != nil {
 		var apiError APIError
 		if errors.As(err, &apiError) && apiError.Code == http.StatusConflict {
 			return fmt.Errorf("failed to link e-mail: %w", ErrEmailTaken)
 		}
 
-		return err
+		return fmt.Errorf("failed to link e-mail: %w", err)
 	}
 
 	return nil

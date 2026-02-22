@@ -16,6 +16,10 @@ func MockEmailCode(i int64) EmailCode {
 	return EmailCode{value: i}
 }
 
+func MockEmailLocale(s string) EmailLocale {
+	return EmailLocale{value: s}
+}
+
 func TestEmailTypes(t *testing.T) {
 	t.Run("Email", func(t *testing.T) {
 		email, err := NewEmail("example@example.com")
@@ -61,5 +65,19 @@ func TestEmailTypes(t *testing.T) {
 		err = json.Unmarshal(data, &loadedEmailCode)
 		require.NoError(t, err)
 		require.Equal(t, emailCode, loadedEmailCode)
+	})
+
+	t.Run("EmailLocale", func(t *testing.T) {
+		locale := NewEmailLocale("ru")
+		require.Equal(t, MockEmailLocale("ru"), locale)
+
+		data, err := json.Marshal(locale)
+		require.NoError(t, err)
+		require.Equal(t, `"ru"`, string(data))
+
+		var loadedEmail EmailLocale
+		err = json.Unmarshal(data, &loadedEmail)
+		require.NoError(t, err)
+		require.Equal(t, locale, loadedEmail)
 	})
 }

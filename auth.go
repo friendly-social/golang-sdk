@@ -59,12 +59,19 @@ func (c *Client) Register(ctx context.Context, nickname Nickname, description Us
 }
 
 // SendLoginRequest sends login code to provided e-mail.
-func (c *Client) SendLoginRequest(ctx context.Context, email Email) error {
+func (c *Client) SendLoginRequest(ctx context.Context, email Email, locale EmailLocale) error {
 	req := sendLoginRequest{
 		Email: email,
 	}
 
-	err := c.do(ctx, nil, "POST", "/auth/email", req, nil)
+	httpReq, err := c.newRequest(ctx, nil, "POST", "/auth/email", req)
+	if err != nil {
+		return fmt.Errorf("failed to send login request: %w", err)
+	}
+
+	httpReq.Header.Set("X-Locale", locale.value)
+
+	err = c.execute(httpReq, nil)
 	if err != nil {
 		return fmt.Errorf("failed to send login request: %w", err)
 	}

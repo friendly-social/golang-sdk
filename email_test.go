@@ -16,12 +16,13 @@ func TestLinkEmail_Success(t *testing.T) {
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-User-Id", "1").
 		MatchHeader("X-Token", "token").
+		MatchHeader("X-Locale", "ru").
 		JSON(`{"email":"example@example.com"}`).
 		Reply(200)
 
 	c := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
-	err := c.LinkEmail(context.Background(), auth, MockEmail("example@example.com"))
+	err := c.LinkEmail(context.Background(), auth, MockEmail("example@example.com"), MockEmailLocale("ru"))
 	require.NoError(t, err)
 }
 
@@ -33,7 +34,7 @@ func TestLinkEmail_Taken(t *testing.T) {
 		Reply(409)
 
 	c := NewClient()
-	err := c.LinkEmail(context.Background(), nil, MockEmail("example@example.com"))
+	err := c.LinkEmail(context.Background(), nil, MockEmail("example@example.com"), MockEmailLocale("ru"))
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrEmailTaken)
 }
@@ -46,7 +47,13 @@ func TestLinkEmail_Failed(t *testing.T) {
 		Reply(400)
 
 	c := NewClient()
-	err := c.LinkEmail(context.Background(), nil, MockEmail("example@example.com"))
+	err := c.LinkEmail(context.Background(), nil, MockEmail("example@example.com"), MockEmailLocale("ru"))
+	require.Error(t, err)
+}
+
+func TestLinkEmail_NewRequestFailed(t *testing.T) {
+	c := NewClient()
+	err := c.LinkEmail(nil, nil, MockEmail("example@example.com"), MockEmailLocale("ru"))
 	require.Error(t, err)
 }
 

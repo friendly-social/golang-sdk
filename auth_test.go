@@ -56,11 +56,12 @@ func TestSendLoginRequest_Success(t *testing.T) {
 
 	gock.New("https://api.getfriend.ly").
 		Post("/auth/email").
+		MatchHeader("X-Locale", "ru").
 		JSON(`{"email": "example@example.com"}`).
 		Reply(200)
 
 	client := NewClient()
-	err := client.SendLoginRequest(context.Background(), MockEmail("example@example.com"))
+	err := client.SendLoginRequest(context.Background(), MockEmail("example@example.com"), MockEmailLocale("ru"))
 	require.NoError(t, err)
 }
 
@@ -72,7 +73,13 @@ func TestSendLoginRequest_Failed(t *testing.T) {
 		Reply(400)
 
 	client := NewClient()
-	err := client.SendLoginRequest(context.Background(), MockEmail("example@example.com"))
+	err := client.SendLoginRequest(context.Background(), MockEmail("example@example.com"), MockEmailLocale("ru"))
+	require.Error(t, err)
+}
+
+func TestSendLoginRequest_NewRequestFailed(t *testing.T) {
+	client := NewClient()
+	err := client.SendLoginRequest(nil, MockEmail("example@example.com"), MockEmailLocale("ru"))
 	require.Error(t, err)
 }
 
