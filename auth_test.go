@@ -79,7 +79,7 @@ func TestSendLoginRequest_Failed(t *testing.T) {
 
 func TestSendLoginRequest_NewRequestFailed(t *testing.T) {
 	client := NewClient()
-	err := client.SendLoginRequest(nil, MockEmail("example@example.com"), MockEmailLocale("ru"))
+	err := client.SendLoginRequest(nil, MockEmail("example@example.com"), MockEmailLocale("ru")) //nolint:staticcheck
 	require.Error(t, err)
 }
 

@@ -53,7 +53,7 @@ func TestLinkEmail_Failed(t *testing.T) {
 
 func TestLinkEmail_NewRequestFailed(t *testing.T) {
 	c := NewClient()
-	err := c.LinkEmail(nil, nil, MockEmail("example@example.com"), MockEmailLocale("ru"))
+	err := c.LinkEmail(nil, nil, MockEmail("example@example.com"), MockEmailLocale("ru")) //nolint:staticcheck
 	require.Error(t, err)
 }
 

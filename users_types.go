@@ -111,7 +111,7 @@ type Interests struct {
 }
 
 // NewInterests creates new Interests or returns an error if their amount is more than 100.
-func NewInterests(i []Interest) (Interests, error) {
+func NewInterests(i ...Interest) (Interests, error) {
 	if len(i) == 0 {
 		return Interests{}, ErrEmptyInterests
 	}

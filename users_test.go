@@ -61,7 +61,7 @@ func TestGetUserDetails_Success(t *testing.T) {
 		MatchHeader("X-User-Id", "1").
 		MatchHeader("X-Token", "token").
 		Reply(200).
-		JSON(`{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"}}`)
+		JSON(`{"id":2,"accessHash":"hash2","nickname":"tr3ble","description":"something2","interests":["mac"],"avatar":{"id":3,"accessHash":"hash3"},"socialLink":"https://google.com"}`)
 
 	client := NewClient()
 	auth := &Authorization{Id: MockUserId(1), Token: MockToken("token")}
@@ -80,6 +80,7 @@ func TestGetUserDetails_Success(t *testing.T) {
 			Id:         MockFileId(3),
 			AccessHash: MockFileAccessHash("hash3"),
 		},
+		SocialLink: MockSocialLink("https://google.com"),
 	}, user)
 }
 

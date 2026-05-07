@@ -21,13 +21,19 @@ func main() {
 	client := sdk.NewClient()
 	ctx := context.Background()
 
-	auth, err := client.Register(ctx,
-		"atennop",
-		"the author of this SDK",
-		Interests{"programming", "learning", "neovim", "debian"},
-		&FileDescriptor{Id: 1, AccessHash: "very-long-hash"},
-		"https://github.com/Atennop1")
+	nickname, _ := NewNickname("atennop")
+	description, _ := NewUserDescription("the author of this SDK")
+	socialLink, _ := NewSocialLink("https://github.com/Atennop1")
 
+	interest1, _ := NewInterest("programming")
+	interest2, _ := NewInterest("learning")
+	interests, _ := NewInterests(interest1, interest2)
+
+	avatarId := NewFileId(1)
+	avatarHash, _ := NewFileAccessHash("very-long-hash")
+	avatar := &FileDescriptor{Id: avatarId, AccessHash: avatarHash}
+
+	auth, err := client.Register(ctx, nickname, description, interests, avatar, socialLink)
 	if err != nil {
 		log.Fatal(err)
 	}

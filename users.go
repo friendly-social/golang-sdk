@@ -13,6 +13,7 @@ type UserDetails struct {
 	Description UserDescription `json:"description"`
 	Interests   Interests       `json:"interests"`
 	Avatar      *FileDescriptor `json:"avatar"`
+	SocialLink  SocialLink      `json:"socialLink"`
 }
 
 type editAccountOption func(*editAccountRequest)

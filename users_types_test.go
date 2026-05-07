@@ -100,15 +100,15 @@ func TestUsersTypes(t *testing.T) {
 	})
 
 	t.Run("Interests", func(t *testing.T) {
-		interests, err := NewInterests([]Interest{MockInterest("vim"), MockInterest("debian")})
+		interests, err := NewInterests(MockInterest("vim"), MockInterest("debian"))
 		require.Equal(t, MockInterests([]Interest{MockInterest("vim"), MockInterest("debian")}), interests)
 		require.NoError(t, err)
 
-		_, err = NewInterests(slices.Repeat([]Interest{MockInterest("vim")}, 1000))
+		_, err = NewInterests(slices.Repeat([]Interest{MockInterest("vim")}, 1000)...)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrTooMuchInterests)
 
-		_, err = NewInterests(nil)
+		_, err = NewInterests()
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrEmptyInterests)
 
