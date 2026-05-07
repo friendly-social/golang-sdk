@@ -22,6 +22,11 @@ func NewUserId(i int64) UserId {
 	return UserId{value: i}
 }
 
+// Value returns UserId as a plain int64.
+func (i UserId) Value() int64 {
+	return i.value
+}
+
 func (i UserId) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.value)
 }
@@ -35,6 +40,11 @@ func (i *UserId) UnmarshalJSON(bytes []byte) error {
 // UserAccessHash represents the unique hash associated with user. Works in trio with UserId and Token.
 type UserAccessHash struct {
 	value string
+}
+
+// Value returns UserAccessHash as a plain string.
+func (h UserAccessHash) Value() string {
+	return h.value
 }
 
 // NewUserAccessHash creates new UserAccessHash or returns an error if hash length isn't 256.
@@ -59,6 +69,11 @@ func (h *UserAccessHash) UnmarshalJSON(bytes []byte) error {
 // Token represents access token for the user. Works in trio with UserId and UserAccessHash.
 type Token struct {
 	value string
+}
+
+// Value returns Token as a plain string.
+func (t Token) Value() string {
+	return t.value
 }
 
 // NewToken creates new Token or returns an error if token's length isn't 256.

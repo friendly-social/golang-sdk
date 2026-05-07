@@ -24,6 +24,7 @@ func TestAuthTypes(t *testing.T) {
 	t.Run("UserId", func(t *testing.T) {
 		id := NewUserId(123)
 		require.Equal(t, UserId{value: 123}, id)
+		require.Equal(t, int64(123), id.Value())
 
 		data, err := json.Marshal(id)
 		require.NoError(t, err)
@@ -37,8 +38,9 @@ func TestAuthTypes(t *testing.T) {
 
 	t.Run("Token", func(t *testing.T) {
 		token, err := NewToken(strings.Repeat("1", 256))
-		require.Equal(t, MockToken(strings.Repeat("1", 256)), token)
 		require.NoError(t, err)
+		require.Equal(t, MockToken(strings.Repeat("1", 256)), token)
+		require.Equal(t, strings.Repeat("1", 256), token.Value())
 
 		_, err = NewToken("1")
 		require.Error(t, err)
@@ -56,8 +58,9 @@ func TestAuthTypes(t *testing.T) {
 
 	t.Run("UserAccesssHash", func(t *testing.T) {
 		hash, err := NewUserAccessHash(strings.Repeat("1", 256))
-		require.Equal(t, MockUserAccessHash(strings.Repeat("1", 256)), hash)
 		require.NoError(t, err)
+		require.Equal(t, MockUserAccessHash(strings.Repeat("1", 256)), hash)
+		require.Equal(t, strings.Repeat("1", 256), hash.Value())
 
 		_, err = NewUserAccessHash("1")
 		require.Error(t, err)

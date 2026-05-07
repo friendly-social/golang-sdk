@@ -23,6 +23,11 @@ type Email struct {
 	value string
 }
 
+// Value returns Email as a plain string.
+func (e Email) Value() string {
+	return e.value
+}
+
 // NewEmail creates new Email object ensuring valid format and length.
 func NewEmail(s string) (Email, error) {
 	if len(s) > 2048 {
@@ -49,6 +54,11 @@ func (e *Email) UnmarshalJSON(bytes []byte) error {
 // EmailCode represents e-mail verification code.
 type EmailCode struct {
 	value int64
+}
+
+// Value returns EmailCode as a plain int64.
+func (e EmailCode) Value() int64 {
+	return e.value
 }
 
 // NewEmailCode creates new EmailCode object ensuring valid length.
@@ -78,6 +88,11 @@ func (e *EmailCode) UnmarshalJSON(bytes []byte) error {
 // EmailLocale represents e-mail locale.
 type EmailLocale struct {
 	value string
+}
+
+// Value returns EmailLocale as a plain string.
+func (e EmailLocale) Value() string {
+	return e.value
 }
 
 // NewEmailLocale creates new EmailLocale object.

@@ -20,6 +20,7 @@ func TestFileTypes(t *testing.T) {
 	t.Run("FileId", func(t *testing.T) {
 		id := NewFileId(123)
 		require.Equal(t, FileId{value: 123}, id)
+		require.Equal(t, int64(123), id.Value())
 
 		data, err := json.Marshal(id)
 		require.NoError(t, err)
@@ -35,6 +36,7 @@ func TestFileTypes(t *testing.T) {
 		hash, err := NewFileAccessHash(strings.Repeat("1", 256))
 		require.NoError(t, err)
 		require.Equal(t, MockFileAccessHash(strings.Repeat("1", 256)), hash)
+		require.Equal(t, strings.Repeat("1", 256), hash.Value())
 
 		_, err = NewFileAccessHash("1")
 		require.Error(t, err)

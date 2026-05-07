@@ -16,6 +16,11 @@ type FileId struct {
 	value int64
 }
 
+// Value returns FileId as a plain int64.
+func (i FileId) Value() int64 {
+	return i.value
+}
+
 // NewFileId creates new FileId from int64.
 func NewFileId(i int64) FileId {
 	return FileId{value: i}
@@ -34,6 +39,11 @@ func (i *FileId) UnmarshalJSON(bytes []byte) error {
 // FileAccessHash represents the unique hash associated with file. Works in pair with FileId.
 type FileAccessHash struct {
 	value string
+}
+
+// Value returns FileAccessHash as a plain string.
+func (h FileAccessHash) Value() string {
+	return h.value
 }
 
 // NewFileAccessHash creates new FileAccessHash or returns an error if hash length isn't 256.

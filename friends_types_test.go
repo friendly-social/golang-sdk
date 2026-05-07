@@ -16,8 +16,9 @@ func MockFriendToken(s string) FriendToken {
 func TestFriendsTypes(t *testing.T) {
 	t.Run("FriendToken", func(t *testing.T) {
 		token, err := NewFriendToken(strings.Repeat("1", 256))
-		require.Equal(t, MockFriendToken(strings.Repeat("1", 256)), token)
 		require.NoError(t, err)
+		require.Equal(t, MockFriendToken(strings.Repeat("1", 256)), token)
+		require.Equal(t, strings.Repeat("1", 256), token.Value())
 
 		_, err = NewFriendToken("1")
 		require.Error(t, err)

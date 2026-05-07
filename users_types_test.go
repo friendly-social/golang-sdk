@@ -32,8 +32,9 @@ func MockSocialLink(s string) SocialLink {
 func TestUsersTypes(t *testing.T) {
 	t.Run("Nickname", func(t *testing.T) {
 		nickname, err := NewNickname("atennop")
-		require.Equal(t, MockNickname("atennop"), nickname)
 		require.NoError(t, err)
+		require.Equal(t, MockNickname("atennop"), nickname)
+		require.Equal(t, "atennop", nickname.Value())
 
 		_, err = NewNickname(strings.Repeat("1", 4096))
 		require.Error(t, err)
@@ -55,8 +56,9 @@ func TestUsersTypes(t *testing.T) {
 
 	t.Run("Description", func(t *testing.T) {
 		desc, err := NewUserDescription("something")
-		require.Equal(t, MockUserDescription("something"), desc)
 		require.NoError(t, err)
+		require.Equal(t, MockUserDescription("something"), desc)
+		require.Equal(t, "something", desc.Value())
 
 		_, err = NewUserDescription(strings.Repeat("1", 4096))
 		require.Error(t, err)
@@ -78,8 +80,9 @@ func TestUsersTypes(t *testing.T) {
 
 	t.Run("Interest", func(t *testing.T) {
 		interest, err := NewInterest("vim")
-		require.Equal(t, MockInterest("vim"), interest)
 		require.NoError(t, err)
+		require.Equal(t, MockInterest("vim"), interest)
+		require.Equal(t, "vim", interest.Value())
 
 		_, err = NewInterest(strings.Repeat("1", 4096))
 		require.Error(t, err)
@@ -101,8 +104,9 @@ func TestUsersTypes(t *testing.T) {
 
 	t.Run("Interests", func(t *testing.T) {
 		interests, err := NewInterests(MockInterest("vim"), MockInterest("debian"))
-		require.Equal(t, MockInterests([]Interest{MockInterest("vim"), MockInterest("debian")}), interests)
 		require.NoError(t, err)
+		require.Equal(t, MockInterests([]Interest{MockInterest("vim"), MockInterest("debian")}), interests)
+		require.Equal(t, []Interest{MockInterest("vim"), MockInterest("debian")}, interests.Value())
 
 		_, err = NewInterests(slices.Repeat([]Interest{MockInterest("vim")}, 1000)...)
 		require.Error(t, err)
@@ -124,8 +128,9 @@ func TestUsersTypes(t *testing.T) {
 
 	t.Run("SocialLink", func(t *testing.T) {
 		link, err := NewSocialLink("https://github.com/Atennop1")
-		require.Equal(t, MockSocialLink("https://github.com/Atennop1"), link)
 		require.NoError(t, err)
+		require.Equal(t, MockSocialLink("https://github.com/Atennop1"), link)
+		require.Equal(t, "https://github.com/Atennop1", link.Value())
 
 		_, err = NewSocialLink(strings.Repeat("1", 4096))
 		require.Error(t, err)

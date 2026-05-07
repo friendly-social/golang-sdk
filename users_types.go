@@ -26,6 +26,11 @@ type Nickname struct {
 	value string
 }
 
+// Value returns Nickname as a plain string.
+func (n Nickname) Value() string {
+	return n.value
+}
+
 // NewNickname creates new Nickname or returns an error if length is more than 256.
 func NewNickname(s string) (Nickname, error) {
 	if s == "" {
@@ -52,6 +57,11 @@ func (n *Nickname) UnmarshalJSON(bytes []byte) error {
 // UserDescription represents user's description.
 type UserDescription struct {
 	value string
+}
+
+// Value returns UserDescription as a plain string.
+func (d UserDescription) Value() string {
+	return d.value
 }
 
 // NewUserDescription creates new UserDescription or returns an error if description is more than 1024.
@@ -82,6 +92,11 @@ type Interest struct {
 	value string
 }
 
+// Value returns Interest as a plain string.
+func (i Interest) Value() string {
+	return i.value
+}
+
 // NewInterest creates new Interest or returns an error if length is more than 64.
 func NewInterest(s string) (Interest, error) {
 	if s == "" {
@@ -110,6 +125,11 @@ type Interests struct {
 	value []Interest
 }
 
+// Value returns Interests as a slice of Interest's.
+func (i Interests) Value() []Interest {
+	return i.value
+}
+
 // NewInterests creates new Interests or returns an error if their amount is more than 100.
 func NewInterests(i ...Interest) (Interests, error) {
 	if len(i) == 0 {
@@ -136,6 +156,11 @@ func (i *Interests) UnmarshalJSON(bytes []byte) error {
 // SocialLink represents link to user's external social network.
 type SocialLink struct {
 	value string
+}
+
+// Value returns SocialLink as a plain string.
+func (s SocialLink) Value() string {
+	return s.value
 }
 
 // NewSocialLink creates new SocialLink or returns an error if length is more than 2048.

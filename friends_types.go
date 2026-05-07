@@ -17,6 +17,11 @@ type FriendToken struct {
 	value string
 }
 
+// Valu returns FriendToken as a plain string.
+func (t FriendToken) Value() string {
+	return t.value
+}
+
 // NewFriendToken creates new FriendToken or returns an error if length is not 256.
 func NewFriendToken(s string) (FriendToken, error) {
 	if len(s) != 256 {
