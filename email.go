@@ -25,7 +25,7 @@ func (c *Client) LinkEmail(ctx context.Context, auth *Authorization, email Email
 		Email: email,
 	}
 
-	httpReq, err := c.newRequest(ctx, auth, "POST", "/email/link", req)
+	httpReq, err := c.request(ctx, auth, "POST", "/email/link", req)
 	if err != nil {
 		return fmt.Errorf("failed to link e-mail: %w", err)
 	}

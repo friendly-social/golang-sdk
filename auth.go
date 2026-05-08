@@ -64,7 +64,7 @@ func (c *Client) SendLoginRequest(ctx context.Context, email Email, locale Email
 		Email: email,
 	}
 
-	httpReq, err := c.newRequest(ctx, nil, "POST", "/auth/email", req)
+	httpReq, err := c.request(ctx, nil, "POST", "/auth/email", req)
 	if err != nil {
 		return fmt.Errorf("failed to send login request: %w", err)
 	}

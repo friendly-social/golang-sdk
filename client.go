@@ -56,7 +56,7 @@ func (c *Client) WithBaseURL(url string) *Client {
 }
 
 func (c *Client) do(ctx context.Context, auth *Authorization, method, path string, body any, result any) error {
-	req, err := c.newRequest(ctx, auth, method, path, body)
+	req, err := c.request(ctx, auth, method, path, body)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (c *Client) do(ctx context.Context, auth *Authorization, method, path strin
 	return c.execute(req, result)
 }
 
-func (c *Client) newRequest(ctx context.Context, auth *Authorization, method, path string, body any) (*http.Request, error) {
+func (c *Client) request(ctx context.Context, auth *Authorization, method, path string, body any) (*http.Request, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonData, err := json.Marshal(body)
@@ -87,8 +87,8 @@ func (c *Client) newRequest(ctx context.Context, auth *Authorization, method, pa
 
 	req.Header.Set("Content-Type", "application/json")
 	if auth != nil {
-		req.Header.Set("X-User-Id", fmt.Sprintf("%d", auth.Id))
-		req.Header.Set("X-Token", string(auth.Token.value))
+		req.Header.Set("X-User-Id", fmt.Sprintf("%d", auth.Id.Value()))
+		req.Header.Set("X-Token", string(auth.Token.Value()))
 	}
 
 	return req, nil
